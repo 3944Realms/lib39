@@ -2,14 +2,17 @@ package top.r3944realms.lib39.core.event;
 
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.CreativeModeTab;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.event.entity.EntityJoinLevelEvent;
 import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
+import net.minecraftforge.event.level.LevelEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.registries.RegistryObject;
 import top.r3944realms.lib39.Lib39;
@@ -26,20 +29,48 @@ public class CommonHandler {
     @net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = Lib39.MOD_ID, bus = net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus.FORGE)
     public static class Game extends CommonHandler {
         static volatile SyncData2Manager syncData2Manager;
+        private static boolean isInitialized = false;
         public static SyncData2Manager getSyncData2Manager() {
             return syncData2Manager;
+        }
+
+        @SubscribeEvent
+        public static void onWorldLoad(LevelEvent.Load event) {
+            if (event.getLevel().isClientSide() || !(event.getLevel() instanceof ServerLevel serverLevel)) {
+                return;
+            }
+
+            // 只处理主世界（避免多次初始化）
+            if (!serverLevel.dimension().equals(Level.OVERWORLD)) {
+                return;
+            }
+
+            synchronized (Game.class) {
+                if (!isInitialized) {
+                    syncData2Manager = new SyncData2Manager();
+                    MinecraftForge.EVENT_BUS.post(new SyncManagerRegisterEvent(syncData2Manager));
+                    isInitialized = true;
+                    Lib39.LOGGER.info("SyncData2Manager initialized on world load");
+                }
+            }
+        }
+        @SubscribeEvent
+        public static void onWorldLoad(LevelEvent.Unload event) {
+            if (event.getLevel().isClientSide() || !(event.getLevel() instanceof ServerLevel serverLevel)) {
+                return;
+            }
+
+            if (!serverLevel.dimension().equals(Level.OVERWORLD)) {
+                return;
+            }
+            isInitialized = false;
         }
 
         @SubscribeEvent
         public static void onServerTick(TickEvent.ServerTickEvent event) {
             if (event.phase == TickEvent.Phase.END) {
                 if (syncData2Manager == null) {
-                    synchronized (Game.class){
-                        if (syncData2Manager == null) {
-                            syncData2Manager = new SyncData2Manager();
-                            MinecraftForge.EVENT_BUS.post(new SyncManagerRegisterEvent(syncData2Manager));
-                        }
-                    }
+                    return;
                 }
                 if (event.getServer().getTickCount() % 10 == 0) {
                     syncData2Manager.forEach(((resourceLocation, iSyncManager) -> iSyncManager.foreach(ISyncData::makeDirty)));
