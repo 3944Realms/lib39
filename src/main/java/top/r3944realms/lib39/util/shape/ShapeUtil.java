@@ -8,6 +8,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
+@SuppressWarnings("unused")
 public class ShapeUtil {
 
     // ==================== 基础形状创建 ====================
@@ -39,33 +40,12 @@ public class ShapeUtil {
     }
 
     /**
-     * 创建双部分方块的形状映射
-     */
-    public static Map<BlockPart, Map<Direction, VoxelShape>> createTwoPartShapeMap(VoxelShape headShape, VoxelShape footShape) {
-        EnumMap<BlockPart, Map<Direction, VoxelShape>> shapeMap = new EnumMap<>(BlockPart.class);
-        shapeMap.put(BlockPart.HEAD, createRotatedDirectionMap(headShape));
-        shapeMap.put(BlockPart.FOOT, createRotatedDirectionMap(footShape));
-        return shapeMap;
-    }
-
-    /**
      * 创建原版双方块的形状映射
      */
     public static Map<DoubleBlockHalf, Map<Direction, VoxelShape>> createDoubleBlockShapeMap(VoxelShape lowerShape, VoxelShape upperShape) {
         EnumMap<DoubleBlockHalf, Map<Direction, VoxelShape>> shapeMap = new EnumMap<>(DoubleBlockHalf.class);
         shapeMap.put(DoubleBlockHalf.LOWER, createRotatedDirectionMap(lowerShape));
         shapeMap.put(DoubleBlockHalf.UPPER, createRotatedDirectionMap(upperShape));
-        return shapeMap;
-    }
-
-    /**
-     * 创建三部分方块的形状映射
-     */
-    public static Map<BlockSection, Map<Direction, VoxelShape>> createThreePartShapeMap(VoxelShape headShape, VoxelShape centerShape, VoxelShape footShape) {
-        EnumMap<BlockSection, Map<Direction, VoxelShape>> shapeMap = new EnumMap<>(BlockSection.class);
-        shapeMap.put(BlockSection.HEAD, createRotatedDirectionMap(headShape));
-        shapeMap.put(BlockSection.CENTER, createRotatedDirectionMap(centerShape));
-        shapeMap.put(BlockSection.FOOT, createRotatedDirectionMap(footShape));
         return shapeMap;
     }
 
@@ -98,6 +78,7 @@ public class ShapeUtil {
     /**
      * 绕Z轴旋转碰撞箱
      */
+    @SuppressWarnings("SuspiciousNameCombination")
     public static @NotNull VoxelShape rotateVoxelShapeZAxis(@NotNull VoxelShape shape) {
         final List<VoxelShape> generatedShapes = new ArrayList<>();
         shape.forAllBoxes((minX, minY, minZ, maxX, maxY, maxZ) -> {
@@ -160,24 +141,6 @@ public class ShapeUtil {
         return directionMap;
     }
 
-    // ==================== 枚举定义 ====================
-
-    /**
-     * 方块部分枚举（双部分方块）
-     */
-    public enum BlockPart {
-        HEAD,
-        FOOT
-    }
-
-    /**
-     * 方块部分枚举（三部分方块）
-     */
-    public enum BlockSection {
-        HEAD,
-        CENTER,
-        FOOT
-    }
 
     // ==================== 便捷构建器 ====================
 
