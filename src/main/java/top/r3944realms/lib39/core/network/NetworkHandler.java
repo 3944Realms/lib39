@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import top.r3944realms.lib39.Lib39;
 import top.r3944realms.lib39.core.network.toClient.SyncNBTDataS2CPack;
 
+@SuppressWarnings("unused")
 public class NetworkHandler {
     private static int cid = 0;
     public static final SimpleChannel INSTANCE = NetworkRegistry.newSimpleChannel(
