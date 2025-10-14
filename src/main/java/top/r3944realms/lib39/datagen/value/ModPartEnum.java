@@ -1,5 +1,8 @@
 package top.r3944realms.lib39.datagen.value;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+
 /**
  * 模组各部分的类型枚举，用于数据生成与分类。
  */
@@ -61,7 +64,8 @@ public enum ModPartEnum {
      * 根据枚举类型生成标准化 key 前缀
      * 例如 ITEM -> "item.", BLOCK -> "block."
      */
-    public String getKeyPrefix() {
+    @Contract(pure = true)
+    public @NotNull String getKeyPrefix() {
         return switch (this) {
             case ITEM -> "item.";
             case BLOCK -> "block.";
@@ -88,7 +92,8 @@ public enum ModPartEnum {
      * 根据枚举类型和具体名称生成完整 key
      * 例如 ITEM + "example_item" -> "item.example_item"
      */
-    public String getFullKey(String name) {
+    @Contract(pure = true)
+    public @NotNull String getFullKey(String name) {
         return getKeyPrefix() + name;
     }
 }

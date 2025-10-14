@@ -1,5 +1,8 @@
 package top.r3944realms.lib39.core.registry;
 
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.UnmodifiableView;
 import top.r3944realms.lib39.datagen.value.ILocaleEntry;
 import top.r3944realms.lib39.datagen.value.McLocale;
 
@@ -23,17 +26,17 @@ public class LocaleRegistry {
     }
 
     /** 通过 Minecraft 代码查找 */
-    public static ILocaleEntry fromMcCode(String code) {
+    public static ILocaleEntry fromMcCode(@NotNull String code) {
         return REGISTRY.get(code.toLowerCase());
     }
 
     /** 列出所有 */
-    public static Collection<ILocaleEntry> allValues() {
+    public static @NotNull @UnmodifiableView Collection<ILocaleEntry> allValues() {
         return Collections.unmodifiableCollection(REGISTRY.values());
     }
 
     /** 动态注册一个扩展 Locale */
-    public static ILocaleEntry registerDynamic(String mcCode, Locale locale) {
+    public static ILocaleEntry registerDynamic(@NotNull String mcCode, Locale locale) {
         return REGISTRY.computeIfAbsent(mcCode.toLowerCase(),
                 k -> new ExtendedLocale(mcCode.toLowerCase(), locale));
     }
@@ -43,8 +46,9 @@ public class LocaleRegistry {
      */
         private record ExtendedLocale(String mcCode, Locale javaLocale) implements ILocaleEntry {
 
+        @Contract(pure = true)
         @Override
-            public String toString() {
+            public @NotNull String toString() {
                 return "ExtendedLocale[" + mcCode + "]";
             }
         }

@@ -1,4 +1,4 @@
-package top.r3944realms.lib39.utils.command;
+package top.r3944realms.lib39.util.command;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.ArgumentBuilder;
@@ -12,6 +12,7 @@ import net.minecraft.commands.Commands;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+@SuppressWarnings("unused")
 public class CommandAliasHelper {
 
     /**
