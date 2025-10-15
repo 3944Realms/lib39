@@ -30,7 +30,7 @@ public class CommonHandler {
     @net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = Lib39.MOD_ID, bus = net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus.FORGE)
     public static class Game extends CommonHandler {
         private static ServerLevel sl;
-        public ServerLevel getServerLevel() {
+        public static ServerLevel getServerLevel() {
             return sl;
         }
         static volatile SyncData2Manager syncData2Manager;
