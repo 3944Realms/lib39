@@ -4,6 +4,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
+@SuppressWarnings("unused")
 public interface ISyncManager<K, T extends ISyncData<?>> {
 
     /**
