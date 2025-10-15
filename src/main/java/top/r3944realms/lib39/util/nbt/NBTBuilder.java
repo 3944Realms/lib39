@@ -1,6 +1,8 @@
 package top.r3944realms.lib39.util.nbt;
 
 import net.minecraft.nbt.*;
+import org.jetbrains.annotations.Contract;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.UUID;
 import java.util.function.Consumer;
@@ -20,21 +22,17 @@ public class NBTBuilder {
     /**
      * 创建一个新的NBT构建器
      */
-    public static NBTBuilder builder() {
+    @Contract(value = " -> new", pure = true)
+    public static @NotNull NBTBuilder builder() {
         return new NBTBuilder();
     }
 
     /**
      * 基于现有CompoundTag创建构建器
      */
-    public static NBTBuilder of(CompoundTag existingTag) {
+    @Contract(value = "_ -> new", pure = true)
+    public static @NotNull NBTBuilder of(CompoundTag existingTag) {
         return new NBTBuilder(existingTag);
-    }
-
-    // 基本数据类型 - 原始类型
-    public NBTBuilder string(String key, String value) {
-        root.putString(key, value);
-        return this;
     }
 
     public NBTBuilder byteValue(String key, byte value) {
@@ -71,7 +69,12 @@ public class NBTBuilder {
         root.putBoolean(key, value);
         return this;
     }
-
+    public NBTBuilder string(String key, String value) {
+        if (value != null) {
+            root.putString(key, value);
+        }
+        return this;
+    }
     // 包装类型 - null安全的版本
     public NBTBuilder string(String key, String value, String defaultValue) {
         if (value != null) {
@@ -82,19 +85,6 @@ public class NBTBuilder {
         return this;
     }
 
-    public NBTBuilder string(String key, String value, boolean skipIfNull) {
-        if (!skipIfNull || value != null) {
-            root.putString(key, value != null ? value : "");
-        }
-        return this;
-    }
-
-    public NBTBuilder stringIf(String key, String value) {
-        if (value != null) {
-            root.putString(key, value);
-        }
-        return this;
-    }
 
     public NBTBuilder byteValue(String key, Byte value) {
         if (value != null) {
@@ -318,13 +308,9 @@ public class NBTBuilder {
 
     // 构建最终的CompoundTag
     public CompoundTag build() {
-        return root.copy();
-    }
-
-    // 获取原始的CompoundTag（不推荐，除非你知道在做什么）
-    public CompoundTag getRaw() {
         return root;
     }
+
 
     /**
      * ListTag专用的构建器 - 同样支持null安全
