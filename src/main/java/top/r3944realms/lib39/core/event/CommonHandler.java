@@ -26,8 +26,13 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class CommonHandler {
+    @SuppressWarnings("unused")
     @net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = Lib39.MOD_ID, bus = net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus.FORGE)
     public static class Game extends CommonHandler {
+        private static ServerLevel sl;
+        public ServerLevel getServerLevel() {
+            return sl;
+        }
         static volatile SyncData2Manager syncData2Manager;
         private static boolean isInitialized = false;
         public static SyncData2Manager getSyncData2Manager() {
@@ -39,20 +44,22 @@ public class CommonHandler {
             if (event.getLevel().isClientSide() || !(event.getLevel() instanceof ServerLevel serverLevel)) return;
             // 只处理主世界（避免多次初始化）
             if (!serverLevel.dimension().equals(Level.OVERWORLD)) return;
-
             synchronized (Game.class) {
                 if (!isInitialized) {
                     syncData2Manager = new SyncData2Manager();
                     MinecraftForge.EVENT_BUS.post(new SyncManagerRegisterEvent(syncData2Manager));
                     isInitialized = true;
+                    sl = serverLevel;
                     Lib39.LOGGER.info("SyncData2Manager initialized on world load");
                 }
             }
         }
         @SubscribeEvent
-        public static void onWorldLoad(LevelEvent.Unload event) {
+        public static void onWorldUnload(LevelEvent.Unload event) {
             if (event.getLevel().isClientSide() || !(event.getLevel() instanceof ServerLevel serverLevel)) return;
             if (!serverLevel.dimension().equals(Level.OVERWORLD)) return;
+
+            sl = null;
             isInitialized = false;
         }
 
@@ -88,6 +95,7 @@ public class CommonHandler {
             }
         }
     }
+    @SuppressWarnings("unused")
     @net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = Lib39.MOD_ID, bus = net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus.MOD)
     public static class Mod extends CommonHandler {
         private static final Map<RegistryObject<Block>, ResourceKey<CreativeModeTab>[]> itemAddMap = new ConcurrentHashMap<>();
