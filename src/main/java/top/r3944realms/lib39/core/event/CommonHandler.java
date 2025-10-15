@@ -36,14 +36,9 @@ public class CommonHandler {
 
         @SubscribeEvent
         public static void onWorldLoad(LevelEvent.Load event) {
-            if (event.getLevel().isClientSide() || !(event.getLevel() instanceof ServerLevel serverLevel)) {
-                return;
-            }
-
+            if (event.getLevel().isClientSide() || !(event.getLevel() instanceof ServerLevel serverLevel)) return;
             // 只处理主世界（避免多次初始化）
-            if (!serverLevel.dimension().equals(Level.OVERWORLD)) {
-                return;
-            }
+            if (!serverLevel.dimension().equals(Level.OVERWORLD)) return;
 
             synchronized (Game.class) {
                 if (!isInitialized) {
@@ -56,25 +51,17 @@ public class CommonHandler {
         }
         @SubscribeEvent
         public static void onWorldLoad(LevelEvent.Unload event) {
-            if (event.getLevel().isClientSide() || !(event.getLevel() instanceof ServerLevel serverLevel)) {
-                return;
-            }
-
-            if (!serverLevel.dimension().equals(Level.OVERWORLD)) {
-                return;
-            }
+            if (event.getLevel().isClientSide() || !(event.getLevel() instanceof ServerLevel serverLevel)) return;
+            if (!serverLevel.dimension().equals(Level.OVERWORLD)) return;
             isInitialized = false;
         }
 
         @SubscribeEvent
         public static void onServerTick(TickEvent.ServerTickEvent event) {
             if (event.phase == TickEvent.Phase.END) {
-                if (syncData2Manager == null) {
-                    return;
-                }
-                if (event.getServer().getTickCount() % 10 == 0) {
+                if (syncData2Manager == null) return;
+                if (event.getServer().getTickCount() % 10 == 0)
                     syncData2Manager.forEach(((resourceLocation, iSyncManager) -> iSyncManager.foreach(ISyncData::makeDirty)));
-                }
                 syncData2Manager.forEach(((resourceLocation, iSyncManager) -> iSyncManager.foreach(ISyncData::checkIfDirtyThenUpdate)));
             }
         }

@@ -2,16 +2,21 @@ package top.r3944realms.lib39.core.sync;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.HashSet;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
-public interface ISyncManager<T extends ISyncData<?>> {
-    Set<T> getSyncSet();
-    default void track(T instance) {
+public interface ISyncManager<K,T extends ISyncData<?>> {
+    Map<K, T> getSyncMap();
+    default Set<T> getSyncSet() {
+        return new HashSet<>(getSyncMap().values());
+    }
+    default void track(K key, T instance) {
         Set<T> syncSet = checkAndGetSet();
         syncSet.add(instance);
     }
-    default void untrack(T instance) {
+    default void untrack(K key, T instance) {
         Set<T> syncSet = checkAndGetSet();
         syncSet.remove(instance);
     }

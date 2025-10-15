@@ -48,7 +48,7 @@ public class NBTReader {
         return this;
     }
 
-    public NBTReader string(String key, Consumer<String> setter, String defaultValue) {
+    public NBTReader string(String key, @NotNull Consumer<String> setter, String defaultValue) {
         setter.accept(nbt.contains(key) ? nbt.getString(key) : defaultValue);
         return this;
     }
@@ -60,7 +60,7 @@ public class NBTReader {
         return this;
     }
 
-    public NBTReader byteValue(String key, Consumer<Byte> setter, byte defaultValue) {
+    public NBTReader byteValue(String key, @NotNull Consumer<Byte> setter, byte defaultValue) {
         setter.accept(nbt.contains(key) ? nbt.getByte(key) : defaultValue);
         return this;
     }
@@ -72,7 +72,7 @@ public class NBTReader {
         return this;
     }
 
-    public NBTReader shortValue(String key, Consumer<Short> setter, short defaultValue) {
+    public NBTReader shortValue(String key, @NotNull Consumer<Short> setter, short defaultValue) {
         setter.accept(nbt.contains(key) ? nbt.getShort(key) : defaultValue);
         return this;
     }
@@ -84,7 +84,7 @@ public class NBTReader {
         return this;
     }
 
-    public NBTReader intValue(String key, Consumer<Integer> setter, int defaultValue) {
+    public NBTReader intValue(String key, @NotNull Consumer<Integer> setter, int defaultValue) {
         setter.accept(nbt.contains(key) ? nbt.getInt(key) : defaultValue);
         return this;
     }
@@ -96,7 +96,7 @@ public class NBTReader {
         return this;
     }
 
-    public NBTReader longValue(String key, Consumer<Long> setter, long defaultValue) {
+    public NBTReader longValue(String key, @NotNull Consumer<Long> setter, long defaultValue) {
         setter.accept(nbt.contains(key) ? nbt.getLong(key) : defaultValue);
         return this;
     }
@@ -108,7 +108,7 @@ public class NBTReader {
         return this;
     }
 
-    public NBTReader floatValue(String key, Consumer<Float> setter, float defaultValue) {
+    public NBTReader floatValue(String key, @NotNull Consumer<Float> setter, float defaultValue) {
         setter.accept(nbt.contains(key) ? nbt.getFloat(key) : defaultValue);
         return this;
     }
@@ -120,7 +120,7 @@ public class NBTReader {
         return this;
     }
 
-    public NBTReader doubleValue(String key, Consumer<Double> setter, double defaultValue) {
+    public NBTReader doubleValue(String key, @NotNull Consumer<Double> setter, double defaultValue) {
         setter.accept(nbt.contains(key) ? nbt.getDouble(key) : defaultValue);
         return this;
     }
@@ -132,7 +132,7 @@ public class NBTReader {
         return this;
     }
 
-    public NBTReader booleanValue(String key, Consumer<Boolean> setter, boolean defaultValue) {
+    public NBTReader booleanValue(String key, @NotNull Consumer<Boolean> setter, boolean defaultValue) {
         setter.accept(nbt.contains(key) ? nbt.getBoolean(key) : defaultValue);
         return this;
     }
@@ -167,7 +167,7 @@ public class NBTReader {
         return this;
     }
 
-    public NBTReader uuid(String key, Consumer<UUID> setter, UUID defaultValue) {
+    public NBTReader uuid(String key, @NotNull Consumer<UUID> setter, UUID defaultValue) {
         setter.accept(nbt.hasUUID(key) ? nbt.getUUID(key) : defaultValue);
         return this;
     }
@@ -180,7 +180,7 @@ public class NBTReader {
         return this;
     }
 
-    public NBTReader compound(String key, Consumer<CompoundTag> setter, CompoundTag defaultValue) {
+    public NBTReader compound(String key, @NotNull Consumer<CompoundTag> setter, CompoundTag defaultValue) {
         setter.accept(nbt.contains(key) ? nbt.getCompound(key) : defaultValue);
         return this;
     }

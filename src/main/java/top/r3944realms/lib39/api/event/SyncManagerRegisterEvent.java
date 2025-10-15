@@ -22,9 +22,9 @@ public class SyncManagerRegisterEvent extends Event {
     /**
      * 类型安全的同步管理器注册
      */
-    public <T extends ISyncData<?>> void registerSyncManager(
+    public <K, T extends ISyncData<?>> void registerSyncManager(
             ResourceLocation id,
-            ISyncManager<T> syncManager,
+            ISyncManager<K, T> syncManager,
             Capability<T> capability
     ) {
         syncs2Manager.registerManager(id, syncManager, capability);
@@ -68,9 +68,9 @@ public class SyncManagerRegisterEvent extends Event {
     /**
      * 完整的类型安全注册
      */
-    public <T extends ISyncData<?>> void registerComplete(
+    public <K, T extends ISyncData<?>> void registerComplete(
             ResourceLocation id,
-            ISyncManager<T> syncManager,
+            ISyncManager<K, T> syncManager,
             Capability<T> capability,
             Class<?>... allowedEntityClasses
     ) {
