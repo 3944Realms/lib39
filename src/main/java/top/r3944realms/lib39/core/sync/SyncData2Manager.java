@@ -182,7 +182,7 @@ public class SyncData2Manager {
     private <T extends ISyncData<?>> void untrackEntityWithTypedEntry(Entity entity, @NotNull TypedSyncEntry<UUID, T> entry) {
         if (entry.capability != null) {
             entity.getCapability(entry.capability)
-                    .ifPresent(cap -> entry.manager.track(entity.getUUID(), cap));
+                    .ifPresent(cap -> entry.manager.untrack(entity.getUUID(), cap));
         }
     }
 
