@@ -3,6 +3,12 @@ package top.r3944realms.lib39.core.sync;
 import java.util.Map;
 import java.util.Set;
 
+/**
+ * The type Cached sync manager.
+ *
+ * @param <K> the type parameter
+ * @param <T> the type parameter
+ */
 @SuppressWarnings("unused")
 public abstract class CachedSyncManager<K, T extends ISyncData<?>> implements ISyncManager<K, T> {
 

@@ -4,36 +4,19 @@ import com.google.common.collect.Maps;
 import com.google.common.collect.Sets;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
+import net.minecraftforge.common.capabilities.Capability;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
 
 /**
  * The type Sync data 2 manager.
  */
-@SuppressWarnings({"unused", "DuplicatedCode"})
-public class SyncData2Manager {
+@SuppressWarnings("unused")
+public class SyncData2CapManager {
     private final Map<ResourceLocation, TypedSyncEntry<?, ?>> typedEntries = Maps.newConcurrentMap();
-
-    /**
-     * 数据提供者接口 - 用于通过键获取数据
-     *
-     * @param <K> the type parameter
-     * @param <T> the type parameter
-     */
-    @FunctionalInterface
-    public interface DataProvider<K, T> {
-        /**
-         * 通过键获取数据的 Optional
-         *
-         * @param key 键
-         * @return 数据的 Optional
-         */
-        Optional<T> getData(K key);
-    }
 
     private static class TypedSyncEntry<K, T extends ISyncData<?>> {
         /**
@@ -41,10 +24,10 @@ public class SyncData2Manager {
          */
         final ISyncManager<K, T> manager;
         /**
-         * The Data provider.
+         * The Capability.
          */
         @Nullable
-        final DataProvider<Entity, T> dataProvider;
+        Capability<T> capability;
         /**
          * The Allowed classes.
          */
@@ -53,60 +36,39 @@ public class SyncData2Manager {
         /**
          * Instantiates a new Typed sync entry.
          *
-         * @param manager      the manager
-         * @param dataProvider the data provider
+         * @param manager    the manager
+         * @param capability the capability
          */
-        TypedSyncEntry(ISyncManager<K, T> manager, @Nullable DataProvider<Entity, T> dataProvider) {
+        TypedSyncEntry(ISyncManager<K, T> manager, @Nullable Capability<T> capability) {
             this.manager = manager;
-            this.dataProvider = dataProvider;
+            this.capability = capability;
             this.allowedClasses = Sets.newConcurrentHashSet();
         }
     }
 
     /**
-     * Register manager with data provider.
+     * Register manager.
      *
-     * @param <K>          the type parameter
-     * @param <T>          the type parameter
-     * @param key          the key
-     * @param manager      the manager
-     * @param dataProvider the data provider
-     */
-    public <K, T extends ISyncData<?>> void registerManagerWithProvider(
-            ResourceLocation key,
-            ISyncManager<K, T> manager,
-            DataProvider<Entity, T> dataProvider
-    ) {
-        Objects.requireNonNull(key, "ResourceLocation key cannot be null");
-        Objects.requireNonNull(manager, "Sync manager cannot be null");
-        Objects.requireNonNull(dataProvider, "Data provider cannot be null");
-
-        typedEntries.put(key, new TypedSyncEntry<>(manager, dataProvider));
-    }
-
-    /**
-     * Register manager with function getter.
-     *
-     * @param <K>     the type parameter
-     * @param <T>     the type parameter
-     * @param key     the key
-     * @param manager the manager
-     * @param getter  the data getter function
+     * @param <K>        the type parameter
+     * @param <T>        the type parameter
+     * @param key        the key
+     * @param manager    the manager
+     * @param capability the capability
      */
     public <K, T extends ISyncData<?>> void registerManager(
             ResourceLocation key,
             ISyncManager<K, T> manager,
-            Function<Entity, Optional<T>> getter
+            Capability<T> capability
     ) {
         Objects.requireNonNull(key, "ResourceLocation key cannot be null");
         Objects.requireNonNull(manager, "Sync manager cannot be null");
-        Objects.requireNonNull(getter, "Data getter function cannot be null");
+        Objects.requireNonNull(capability, "Capability cannot be null");
 
-        typedEntries.put(key, new TypedSyncEntry<>(manager, getter::apply));
+        typedEntries.put(key, new TypedSyncEntry<>(manager, capability));
     }
 
     /**
-     * 向后兼容的注册方法（只注册管理器，不注册数据提供者）
+     * 向后兼容的注册方法（只注册管理器，不注册能力）
      *
      * @param key     the key
      * @param manager the manager
@@ -116,7 +78,8 @@ public class SyncData2Manager {
         Objects.requireNonNull(key, "ResourceLocation key cannot be null");
         Objects.requireNonNull(manager, "Sync manager cannot be null");
 
-        // 创建一个没有数据提供者的 TypedSyncEntry
+        // 创建一个虚拟的 TypedSyncEntry，但 capability 为 null
+        // 注意：这种方法会限制类型安全的功能
         typedEntries.put(key, new TypedSyncEntry<>(
                 (ISyncManager<?, ISyncData<?>>) manager,
                 null
@@ -138,36 +101,19 @@ public class SyncData2Manager {
     }
 
     /**
-     * Gets data provider.
+     * Gets capability.
      *
      * @param <T> the type parameter
      * @param key the key
-     * @return the data provider
+     * @return the capability
      */
     @SuppressWarnings("unchecked")
-    public <T extends ISyncData<?>> Optional<DataProvider<Entity, T>> getDataProvider(ResourceLocation key) {
+    public <T extends ISyncData<?>> Optional<Capability<T>> getCapability(ResourceLocation key) {
         TypedSyncEntry<?, ?> entry = typedEntries.get(key);
-        if (entry != null && entry.dataProvider != null) {
-            return Optional.of((DataProvider<Entity, T>) entry.dataProvider);
+        if (entry != null && entry.capability != null) {
+            return Optional.of((Capability<T>) entry.capability);
         }
         return Optional.empty();
-    }
-
-    /**
-     * 获取实体数据
-     *
-     * @param <T>    the type parameter
-     * @param key    the key
-     * @param entity the entity
-     * @return the entity data
-     */
-    @SuppressWarnings("unchecked")
-    public <T extends ISyncData<?>> Optional<T> getEntityData(ResourceLocation key, Entity entity) {
-        return getDataProvider(key)
-                .flatMap(provider -> {
-                    Optional<ISyncData<?>> result = provider.getData(entity);
-                    return (Optional<T>) result;
-                });
     }
 
     /**
@@ -203,52 +149,40 @@ public class SyncData2Manager {
         TypedSyncEntry<?, ?> entry = typedEntries.get(key);
         if (entry != null && classes.length > 0) {
             Arrays.asList(classes).forEach(entry.allowedClasses::remove);
+
         }
     }
 
     /**
-     * 绑定数据提供者（用于分离注册的情况）
+     * 绑定能力（用于分离注册的情况）
      *
-     * @param <T>          the type parameter
-     * @param key          the key
-     * @param dataProvider the data provider
+     * @param <T>        the type parameter
+     * @param key        the key
+     * @param capability the capability
      */
-    public <T extends ISyncData<?>> void bindDataProvider(ResourceLocation key, DataProvider<Entity, T> dataProvider) {
+    public <T extends ISyncData<?>> void bindCapability(ResourceLocation key, Capability<T> capability) {
         Objects.requireNonNull(key, "ResourceLocation key cannot be null");
-        Objects.requireNonNull(dataProvider, "Data provider cannot be null");
+        Objects.requireNonNull(capability, "Capability cannot be null");
 
         TypedSyncEntry<?, ?> entry = typedEntries.get(key);
         if (entry != null) {
-            // 更新现有条目的数据提供者
-            updateDataProviderInEntry(key, entry, dataProvider);
-        } else {
-            throw new IllegalArgumentException("No manager found for " + key);
-        }
+            // 更新现有条目的能力
+            updateCapabilityInEntry(key, entry, capability);
+        } else throw new IllegalArgumentException("No manager found for " + key);
     }
 
     /**
-     * 绑定简单的数据获取器
-     *
-     * @param <T>    the type parameter
-     * @param key    the key
-     * @param getter the data getter function
-     */
-    public <T extends ISyncData<?>> void bindDataGetter(ResourceLocation key, Function<Entity, Optional<T>> getter) {
-        bindDataProvider(key, getter::apply);
-    }
-
-    /**
-     * 解绑数据提供者
+     * 解绑能力
      *
      * @param key the key
      */
-    public void unbindDataProvider(ResourceLocation key) {
+    public void unbindCapability(ResourceLocation key) {
         Objects.requireNonNull(key, "ResourceLocation key cannot be null");
 
         TypedSyncEntry<?, ?> entry = typedEntries.get(key);
         if (entry != null) {
-            // 将数据提供者设置为null，但保留管理器和其他配置
-            updateDataProviderInEntry(key, entry, null);
+            // 将能力设置为null，但保留管理器和其他配置
+            updateCapabilityInEntry(key, entry, null);
         }
     }
 
@@ -278,18 +212,16 @@ public class SyncData2Manager {
         Objects.requireNonNull(entityClass, "Entity class cannot be null");
 
         TypedSyncEntry<?, ?> entry = typedEntries.get(key);
-        if (entry == null) {
-            return false;
+        boolean isAllowed = false;
+        if (entry != null) {
+            for (Class<?> allowedClass : entry.allowedClasses) {
+                if (entityClass.isAssignableFrom(allowedClass)) {
+                    isAllowed = true;
+                    break;
+                }
+            }
         }
-
-        // 如果没有设置允许的类，则默认允许所有类
-        if (entry.allowedClasses.isEmpty()) {
-            return true;
-        }
-
-        // 检查实体类是否在允许的类中
-        return entry.allowedClasses.stream()
-                .anyMatch(allowedClass -> allowedClass.isAssignableFrom(entityClass));
+        return entry != null && isAllowed ;
     }
 
     /**
@@ -298,6 +230,7 @@ public class SyncData2Manager {
      * @param entity    the entity
      * @param managerId the manager id
      */
+// 类型安全的事件处理
     @SuppressWarnings("unchecked")
     public void trackEntityForManager(Entity entity, ResourceLocation managerId) {
         TypedSyncEntry<UUID, ?> entry = (TypedSyncEntry<UUID, ?>) typedEntries.get(managerId);
@@ -307,9 +240,9 @@ public class SyncData2Manager {
     }
 
     private <T extends ISyncData<?>> void trackEntityWithTypedEntry(Entity entity, @NotNull TypedSyncEntry<UUID, T> entry) {
-        if (entry.dataProvider != null) {
-            entry.dataProvider.getData(entity)
-                    .ifPresent(data -> entry.manager.track(entity.getUUID(), data));
+        if (entry.capability != null) {
+            entity.getCapability(entry.capability)
+                    .ifPresent(cap -> entry.manager.track(entity.getUUID(), cap));
         }
     }
 
@@ -319,6 +252,7 @@ public class SyncData2Manager {
      * @param entity    the entity
      * @param managerId the manager id
      */
+// 类型安全的事件处理 - 取消跟踪实体
     @SuppressWarnings("unchecked")
     public void untrackEntityForManager(Entity entity, ResourceLocation managerId) {
         TypedSyncEntry<UUID, ?> entry = (TypedSyncEntry<UUID, ?>) typedEntries.get(managerId);
@@ -328,9 +262,9 @@ public class SyncData2Manager {
     }
 
     private <T extends ISyncData<?>> void untrackEntityWithTypedEntry(Entity entity, @NotNull TypedSyncEntry<UUID, T> entry) {
-        if (entry.dataProvider != null) {
-            entry.dataProvider.getData(entity)
-                    .ifPresent(data -> entry.manager.untrack(entity.getUUID(), data));
+        if (entry.capability != null) {
+            entity.getCapability(entry.capability)
+                    .ifPresent(cap -> entry.manager.untrack(entity.getUUID(), cap));
         }
     }
 
@@ -383,6 +317,7 @@ public class SyncData2Manager {
     }
 
     private <K, T extends ISyncData<?>> void clearTrackedDataForEntry(@NotNull TypedSyncEntry<K, T> entry) {
+        // 获取当前跟踪的集合并清空
         Set<T> syncSet = entry.manager.getSyncSet();
         if (syncSet != null) {
             syncSet.clear();
@@ -398,22 +333,15 @@ public class SyncData2Manager {
         }
     }
 
-    // 辅助方法：更新条目的数据提供者
+    // 辅助方法：更新条目的能力
     @SuppressWarnings("unchecked")
-    private <K, T extends ISyncData<?>> void updateDataProviderInEntry(
-            ResourceLocation id,
-            TypedSyncEntry<?,?> entry,
-            DataProvider<Entity, T> newDataProvider
-    ) {
-        // 由于 DataProvider 是 final，我们需要创建一个新的 TypedSyncEntry
-        TypedSyncEntry<K, T> newEntry = new TypedSyncEntry<>(
-                (ISyncManager<K, T>) entry.manager,
-                newDataProvider
-        );
-        newEntry.allowedClasses.addAll(entry.allowedClasses);
-
-        typedEntries.put(id, newEntry);
+    private <K, T extends ISyncData<?>> void updateCapabilityInEntry(ResourceLocation id, TypedSyncEntry<?,?> entry, Capability<T> newCapability) {
+        TypedSyncEntry<K, T> typedEntry = (TypedSyncEntry<K, T>) entry;
+        //重构了 TypedSyncEntry 使 capability 可变
+        typedEntry.capability = newCapability;
+        typedEntries.computeIfPresent(id, (resourceLocation, typedSyncEntry) -> typedEntry);
     }
+
 
     /**
      * Gets registered keys.

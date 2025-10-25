@@ -11,12 +11,24 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * The type Simple language provider.
+ */
 @SuppressWarnings("unused")
 public class SimpleLanguageProvider extends LanguageProvider {
     private final McLocale language;
     private final ILangKeyValue langKeyValue;
     private final Map<String, String> lanKeyMap;
     private static final List<String> objects = new ArrayList<>();
+
+    /**
+     * Instantiates a new Simple language provider.
+     *
+     * @param output       the output
+     * @param modId        the mod id
+     * @param Lan          the lan
+     * @param langKeyValue the lang key value
+     */
     public SimpleLanguageProvider(PackOutput output, String modId, @NotNull McLocale Lan, ILangKeyValue langKeyValue) {
         super(output, modId, Lan.mcCode());
         this.language = Lan;

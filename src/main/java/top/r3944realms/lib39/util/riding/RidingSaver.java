@@ -25,10 +25,16 @@ import top.r3944realms.lib39.util.lang.Pair;
 import java.util.*;
 import java.util.function.Function;
 
+/**
+ * The type Riding saver.
+ */
 @SuppressWarnings("unused")
 public class RidingSaver {
     /**
      * 保存骑乘关系
+     *
+     * @param entity the entity
+     * @return the riding relationship
      */
     @Contract("null -> new")
     public static @NotNull RidingRelationship save(@Nullable Entity entity) {
@@ -37,6 +43,10 @@ public class RidingSaver {
 
     /**
      * 保存骑乘关系
+     *
+     * @param entity   the entity
+     * @param findRoot the find root
+     * @return the riding relationship
      */
     @Contract("null, _ -> new")
     public static @NotNull RidingRelationship save(@Nullable Entity entity, boolean findRoot) {
@@ -98,6 +108,11 @@ public class RidingSaver {
     // 传入一个实体提供器 Function<UUID, Entity>，通常在服务器侧就是 level::getEntity
     private static Function<UUID, Entity> entityProvider;
 
+    /**
+     * Sets entity provider.
+     *
+     * @param provider the provider
+     */
     public static void setEntityProvider(Function<UUID, Entity> provider) {
         entityProvider = provider;
     }

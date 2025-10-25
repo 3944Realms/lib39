@@ -22,10 +22,17 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.function.Function;
 
+/**
+ * The type Riding finder.
+ */
 @SuppressWarnings("unused")
 public class RidingFinder {
     /**
      * 从JSON字符串应用骑乘关系
+     *
+     * @param ship           the ship
+     * @param entityProvider the entity provider
+     * @return the entity from riding ship
      */
     public static @NotNull List<Entity> getEntityFromRidingShip(RidingRelationship ship,
                                                                 Function<UUID, Entity> entityProvider) {
@@ -42,8 +49,12 @@ public class RidingFinder {
         }
         return ret;
     }
+
     /**
      * 查找根载具
+     *
+     * @param entity the entity
+     * @return the entity
      */
     @Nullable
     public static Entity findRootVehicle(@Nullable Entity entity) {
@@ -64,6 +75,9 @@ public class RidingFinder {
 
     /**
      * 获取所有乘客（包括嵌套乘客）
+     *
+     * @param entity the entity
+     * @return the all passengers
      */
     public static List<Entity> getAllPassengers(@Nullable Entity entity) {
         return getAllPassengers(entity, true);
@@ -71,6 +85,10 @@ public class RidingFinder {
 
     /**
      * 获取所有乘客（包括嵌套乘客）
+     *
+     * @param entity   the entity
+     * @param findRoot the find root
+     * @return the all passengers
      */
     public static List<Entity> getAllPassengers(@Nullable Entity entity, boolean findRoot) {
         if (entity == null) {

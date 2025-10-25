@@ -12,11 +12,18 @@ import net.minecraft.commands.Commands;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+/**
+ * The type Command alias helper.
+ */
 @SuppressWarnings("unused")
 public class CommandAliasHelper {
 
     /**
      * 注册命令及其别名
+     *
+     * @param dispatcher  the dispatcher
+     * @param mainCommand the main command
+     * @param aliases     the aliases
      */
     public static void registerWithAliases(@NotNull CommandDispatcher<CommandSourceStack> dispatcher,
                                            LiteralArgumentBuilder<CommandSourceStack> mainCommand,

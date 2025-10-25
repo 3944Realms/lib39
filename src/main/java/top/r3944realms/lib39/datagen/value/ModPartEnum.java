@@ -7,62 +7,101 @@ import org.jetbrains.annotations.NotNull;
  * 模组各部分的类型枚举，用于数据生成与分类。
  */
 public enum ModPartEnum {
-    /** 默认/未指定类型 */
+    /**
+     * 默认/未指定类型
+     */
     DEFAULT,
 
-    /** 物品 */
+    /**
+     * 物品
+     */
     ITEM,
 
-    /** 方块 */
+    /**
+     * 方块
+     */
     BLOCK,
 
-    /** 附魔 */
+    /**
+     * 附魔
+     */
     ENCHANTMENT,
 
-    /** 成就 / 进度 */
+    /**
+     * 成就 / 进度
+     */
     ADVANCEMENT,
 
-    /** 创造模式物品栏 */
+    /**
+     * 创造模式物品栏
+     */
     CREATIVE_TAB,
 
-    /** 配置项 */
+    /**
+     * 配置项
+     */
     CONFIG,
 
-    /** 实体（生物、载具等） */
+    /**
+     * 实体（生物、载具等）
+     */
     ENTITY,
 
-    /** 图形界面 */
+    /**
+     * 图形界面
+     */
     GUI,
 
-    /** 作者信息 */
+    /**
+     * 作者信息
+     */
     AUTHOR,
 
-    /** 标题 */
+    /**
+     * 标题
+     */
     TITLE,
 
-    /** 名称 */
+    /**
+     * 名称
+     */
     NAME,
 
-    /** 游戏规则（/gamerule） */
+    /**
+     * 游戏规则（/gamerule）
+     */
     GAME_RULE,
 
-    /** 描述文本 */
+    /**
+     * 描述文本
+     */
     DESCRIPTION,
 
-    /** 一般信息 */
+    /**
+     * 一般信息
+     */
     INFO,
 
-    /** 消息（聊天、提示等） */
+    /**
+     * 消息（聊天、提示等）
+     */
     MESSAGE,
 
-    /** 命令 */
+    /**
+     * 命令
+     */
     COMMAND,
 
-    /** 声音资源 */
+    /**
+     * 声音资源
+     */
     SOUND;
+
     /**
      * 根据枚举类型生成标准化 key 前缀
      * 例如 ITEM -> "item.", BLOCK -> "block."
+     *
+     * @return the key prefix
      */
     @Contract(pure = true)
     public @NotNull String getKeyPrefix() {
@@ -91,6 +130,9 @@ public enum ModPartEnum {
     /**
      * 根据枚举类型和具体名称生成完整 key
      * 例如 ITEM + "example_item" -> "item.example_item"
+     *
+     * @param name the name
+     * @return the full key
      */
     @Contract(pure = true)
     public @NotNull String getFullKey(String name) {

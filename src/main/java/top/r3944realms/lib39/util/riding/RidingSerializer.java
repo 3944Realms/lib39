@@ -17,11 +17,18 @@ package top.r3944realms.lib39.util.riding;
 
 import com.google.gson.Gson;
 
+/**
+ * The type Riding serializer.
+ */
 @SuppressWarnings("unused")
 public class RidingSerializer {
     private static final Gson GSON = new Gson();
+
     /**
      * 序列化骑乘关系
+     *
+     * @param relationship the relationship
+     * @return the string
      */
     public static String serialize(RidingRelationship relationship) {
         return GSON.toJson(relationship);
@@ -29,6 +36,9 @@ public class RidingSerializer {
 
     /**
      * 反序列化骑乘关系
+     *
+     * @param json the json
+     * @return the riding relationship
      */
     public static RidingRelationship deserialize(String json) {
         return GSON.fromJson(json, RidingRelationship.class);

@@ -5,10 +5,26 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
+/**
+ * The type Triple.
+ *
+ * @param <A> the type parameter
+ * @param <B> the type parameter
+ * @param <C> the type parameter
+ */
 @SuppressWarnings("unused")
 public final class Triple<A, B, C> {
+    /**
+     * The First.
+     */
     public A first;
+    /**
+     * The Second.
+     */
     public B second;
+    /**
+     * The Third.
+     */
     public C third;
 
     private Triple(A first, B second, C third) {
@@ -17,6 +33,17 @@ public final class Triple<A, B, C> {
         this.third = third;
     }
 
+    /**
+     * Of @ not null triple.
+     *
+     * @param <A>    the type parameter
+     * @param <B>    the type parameter
+     * @param <C>    the type parameter
+     * @param first  the first
+     * @param second the second
+     * @param third  the third
+     * @return the @ not null triple
+     */
     @Contract(value = "_, _, _ -> new", pure = true)
     public static <A, B, C> @NotNull Triple<A, B, C> of(A first, B second, C third) {
         return new Triple<>(first, second, third);
@@ -37,8 +64,9 @@ public final class Triple<A, B, C> {
         return Objects.hash(first, second, third);
     }
 
+    @Contract(pure = true)
     @Override
-    public String toString() {
+    public @NotNull String toString() {
         return "Triple{" +
                 "first=" + first +
                 ", second=" + second +

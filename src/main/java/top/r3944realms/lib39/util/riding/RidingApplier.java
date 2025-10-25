@@ -24,13 +24,17 @@ import java.util.Queue;
 import java.util.UUID;
 import java.util.function.Function;
 
+/**
+ * The type Riding applier.
+ */
 @SuppressWarnings("unused")
 public class RidingApplier {
     /**
      * 应用骑乘关系（在服务器端调用）
-     * @param relationship 骑乘关系
+     *
+     * @param relationship   骑乘关系
      * @param entityProvider 实体提供器（根据UUID获取实体）
-     * @return 应用成功的实体数量
+     * @return 应用成功的实体数量 int
      */
     public static int applyRidingRelationship(RidingRelationship relationship,
                                               Function<UUID, Entity> entityProvider) {
@@ -87,8 +91,12 @@ public class RidingApplier {
 
         return appliedCount;
     }
+
     /**
      * 批量应用骑乘关系（适用于世界加载时）
+     *
+     * @param relationships  the relationships
+     * @param entityProvider the entity provider
      */
     public static void applyRidingRelationships(Collection<RidingRelationship> relationships,
                                                 Function<UUID, Entity> entityProvider) {
@@ -108,6 +116,10 @@ public class RidingApplier {
 
     /**
      * 从JSON字符串应用骑乘关系
+     *
+     * @param json           the json
+     * @param entityProvider the entity provider
+     * @return the int
      */
     public static int applyRidingRelationshipFromJson(String json,
                                                       Function<UUID, Entity> entityProvider) {

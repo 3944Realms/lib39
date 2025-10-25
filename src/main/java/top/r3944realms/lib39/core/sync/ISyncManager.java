@@ -4,16 +4,26 @@ import java.util.Map;
 import java.util.Set;
 import java.util.function.Consumer;
 
+/**
+ * The interface Sync manager.
+ *
+ * @param <K> the type parameter
+ * @param <T> the type parameter
+ */
 @SuppressWarnings("unused")
 public interface ISyncManager<K, T extends ISyncData<?>> {
 
     /**
      * 获取同步映射
+     *
+     * @return the sync map
      */
     Map<K, T> getSyncMap();
 
     /**
      * 获取同步集合
+     *
+     * @return the sync set
      */
     default Set<T> getSyncSet() {
         Map<K, T> syncMap = getSyncMap();
@@ -22,6 +32,9 @@ public interface ISyncManager<K, T extends ISyncData<?>> {
 
     /**
      * 跟踪实例
+     *
+     * @param key      the key
+     * @param instance the instance
      */
     default void track(K key, T instance) {
         Map<K, T> syncMap = getSyncMap();
@@ -33,6 +46,9 @@ public interface ISyncManager<K, T extends ISyncData<?>> {
 
     /**
      * 取消跟踪
+     *
+     * @param key      the key
+     * @param instance the instance
      */
     default void untrack(K key, T instance) {
         Map<K, T> syncMap = getSyncMap();
@@ -45,6 +61,8 @@ public interface ISyncManager<K, T extends ISyncData<?>> {
 
     /**
      * 遍历操作
+     *
+     * @param consumer the consumer
      */
     default void foreach(Consumer<T> consumer) {
         Map<K, T> syncMap = getSyncMap();
@@ -56,6 +74,8 @@ public interface ISyncManager<K, T extends ISyncData<?>> {
 
     /**
      * 批量操作
+     *
+     * @param instances the instances
      */
     default void trackAll(Map<K, T> instances) {
         Map<K, T> syncMap = getSyncMap();
@@ -67,6 +87,8 @@ public interface ISyncManager<K, T extends ISyncData<?>> {
 
     /**
      * 获取大小
+     *
+     * @return the int
      */
     default int size() {
         Map<K, T> syncMap = getSyncMap();
@@ -75,6 +97,9 @@ public interface ISyncManager<K, T extends ISyncData<?>> {
 
     /**
      * 检查是否包含key
+     *
+     * @param key the key
+     * @return the boolean
      */
     default boolean containsKey(K key) {
         Map<K, T> syncMap = getSyncMap();
@@ -83,6 +108,9 @@ public interface ISyncManager<K, T extends ISyncData<?>> {
 
     /**
      * 检查是否包含value
+     *
+     * @param value the value
+     * @return the boolean
      */
     default boolean containsValue(T value) {
         Map<K, T> syncMap = getSyncMap();
