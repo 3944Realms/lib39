@@ -1,7 +1,8 @@
 package top.r3944realms.lib39.datagen.value;
 
-import org.jetbrains.annotations.Contract;
-import org.jetbrains.annotations.NotNull;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.level.block.Block;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * 模组各部分的类型枚举，用于数据生成与分类。
@@ -15,12 +16,12 @@ public enum ModPartEnum {
     /**
      * 物品
      */
-    ITEM,
+    ITEM(Item.class),
 
     /**
      * 方块
      */
-    BLOCK,
+    BLOCK(Block.class),
 
     /**
      * 附魔
@@ -28,9 +29,14 @@ public enum ModPartEnum {
     ENCHANTMENT,
 
     /**
-     * 成就 / 进度
+     * 进度标题
      */
-    ADVANCEMENT,
+    ADVANCEMENT_TITLE,
+
+    /**
+     * 成就描述
+     */
+    ADVANCEMENT_DESCRIPTION,
 
     /**
      * 创造模式物品栏
@@ -51,11 +57,14 @@ public enum ModPartEnum {
      * 图形界面
      */
     GUI,
-
     /**
-     * 作者信息
+     * 画作描述
      */
-    AUTHOR,
+    PAINTING_TITLE,
+    /**
+     * 画作作者
+     */
+    PAINTING_AUTHOR,
 
     /**
      * 标题
@@ -88,6 +97,11 @@ public enum ModPartEnum {
     MESSAGE,
 
     /**
+     * 生物群系
+     */
+    BIOME,
+
+    /**
      * 命令
      */
     COMMAND,
@@ -96,46 +110,56 @@ public enum ModPartEnum {
      * 声音资源
      */
     SOUND;
-
-    /**
-     * 根据枚举类型生成标准化 key 前缀
-     * 例如 ITEM -> "item.", BLOCK -> "block."
-     *
-     * @return the key prefix
-     */
-    @Contract(pure = true)
-    public @NotNull String getKeyPrefix() {
-        return switch (this) {
-            case ITEM -> "item.";
-            case BLOCK -> "block.";
-            case ENCHANTMENT -> "enchantment.";
-            case ADVANCEMENT -> "advancement.";
-            case CREATIVE_TAB -> "creative_tab.";
-            case CONFIG -> "config.";
-            case ENTITY -> "entity.";
-            case GUI -> "gui.";
-            case AUTHOR -> "author.";
-            case TITLE -> "title.";
-            case NAME -> "name.";
-            case GAME_RULE -> "gamerule.";
-            case DESCRIPTION -> "description.";
-            case INFO -> "info.";
-            case MESSAGE -> "message.";
-            case COMMAND -> "command.";
-            case SOUND -> "sound.";
-            default -> "";
-        };
+    ;
+    @Nullable
+    private final Class<?> clazz;
+    ModPartEnum() {
+        clazz = null;
+    }
+    ModPartEnum(@Nullable Class<?> clazz) {
+        this.clazz = clazz;
     }
 
     /**
-     * 根据枚举类型和具体名称生成完整 key
-     * 例如 ITEM + "example_item" -> "item.example_item"
+     * Gets full key.
      *
-     * @param name the name
+     * @param modId the mod id
+     * @param name  the name
      * @return the full key
      */
-    @Contract(pure = true)
-    public @NotNull String getFullKey(String name) {
-        return getKeyPrefix() + name;
+    public String getFullKey(String modId, String name) {
+        return switch (this) {
+            case ITEM -> "item." + modId + "." + name;
+            case BLOCK -> "block." + modId + "." + name;
+            case ENCHANTMENT -> "enchantment.";
+            case ADVANCEMENT_TITLE -> "advancement." + modId + "." + name + ".title";
+            case ADVANCEMENT_DESCRIPTION -> "advancement." + modId + "." + name + ".description";
+            case CREATIVE_TAB -> "creativetab." + modId + "." + name;
+            case BIOME -> "biome." + modId + "." + name;
+            case CONFIG -> "config." + modId + "." + name;
+            case ENTITY -> "entity." + modId + "." + name;
+            case GUI -> "gui." + modId + "." + name;
+            case PAINTING_AUTHOR -> "painting." + modId + "." + name + ".author";
+            case PAINTING_TITLE -> "painting." + modId + "." + name + ".title";
+            case TITLE -> "title." + modId + "." + name;
+            case NAME -> "name." + modId + "." + name;
+            case GAME_RULE -> "gamerule.";
+            case DESCRIPTION -> "description.";
+            case INFO -> "info." + modId + "." + name;
+            case MESSAGE -> "message." + modId + "." + name;
+            case COMMAND -> "command." + modId + "." + name;
+            case SOUND -> "sound." + modId + "." + name;
+            default -> modId + name;
+        };
+    }
+
+
+    /**
+     * Gets clazz.
+     *
+     * @return the clazz
+     */
+    public @Nullable Class<?> getClazz() {
+        return clazz;
     }
 }

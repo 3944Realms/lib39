@@ -30,9 +30,9 @@ public interface ISyncData<T> {
     void setDirty(boolean dirty);
 
     /**
-     * Make dirty.
+     * Mark dirty.
      */
-    default void makeDirty() {
+    default void markDirty() {
         setDirty(true);
     }
 

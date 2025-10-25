@@ -210,16 +210,6 @@ public class CompatManager {
         }
     }
 
-    // ===================== 便捷方法 =====================
-
-    /**
-     * Add listener for all.
-     *
-     * @param bus the bus
-     */
-    public void addListenerForAll(Mod.EventBusSubscriber.Bus bus) {
-        addListenerForAll(null, bus);
-    }
 
     /**
      * Add listener for compat.

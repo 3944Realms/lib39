@@ -21,8 +21,8 @@ import net.minecraftforge.registries.RegistryObject;
 import top.r3944realms.lib39.Lib39;
 import top.r3944realms.lib39.api.event.RegisterCompatEvent;
 import top.r3944realms.lib39.api.event.SyncManagerRegisterEvent;
-import top.r3944realms.lib39.core.sync.ISyncData;
 import top.r3944realms.lib39.core.compat.CompatManager;
+import top.r3944realms.lib39.core.sync.ISyncData;
 import top.r3944realms.lib39.core.sync.SyncData2Manager;
 
 import java.util.ArrayList;
@@ -111,7 +111,7 @@ public class CommonEventHandler {
             if (event.phase == TickEvent.Phase.END) {
                 if (syncData2Manager == null) return;
                 if (event.getServer().getTickCount() % 10 == 0)
-                    syncData2Manager.forEach(((resourceLocation, iSyncManager) -> iSyncManager.foreach(ISyncData::makeDirty)));
+                    syncData2Manager.forEach(((resourceLocation, iSyncManager) -> iSyncManager.foreach(ISyncData::markDirty)));
                 syncData2Manager.forEach(((resourceLocation, iSyncManager) -> iSyncManager.foreach(ISyncData::checkIfDirtyThenUpdate)));
             }
         }

@@ -4,6 +4,7 @@ import net.minecraft.data.PackOutput;
 import net.minecraftforge.common.data.LanguageProvider;
 import org.jetbrains.annotations.NotNull;
 import top.r3944realms.lib39.datagen.value.ILangKeyValue;
+import top.r3944realms.lib39.datagen.value.ILangKeyValueCollection;
 import top.r3944realms.lib39.datagen.value.McLocale;
 
 import java.util.ArrayList;
@@ -14,40 +15,55 @@ import java.util.Map;
 /**
  * The type Simple language provider.
  */
-@SuppressWarnings("unused")
 public class SimpleLanguageProvider extends LanguageProvider {
     private final McLocale language;
-    private final ILangKeyValue langKeyValue;
-    private final Map<String, String> lanKeyMap;
-    private static final List<String> objects = new ArrayList<>();
+    private final ILangKeyValueCollection langKeyValueCollection;
+    private final Map<String, String> translationMap; // Better naming
+    private final List<String> orderedKeys; // Better naming than "objects"
 
     /**
      * Instantiates a new Simple language provider.
      *
-     * @param output       the output
-     * @param modId        the mod id
-     * @param Lan          the lan
-     * @param langKeyValue the lang key value
+     * @param output                 the output
+     * @param modId                  the mod id
+     * @param language               the language
+     * @param langKeyValueCollection the lang key value collection
      */
-    public SimpleLanguageProvider(PackOutput output, String modId, @NotNull McLocale Lan, ILangKeyValue langKeyValue) {
-        super(output, modId, Lan.mcCode());
-        this.language = Lan;
-        this.langKeyValue = langKeyValue;
-        lanKeyMap = new HashMap<>();
-        init();
+    public SimpleLanguageProvider(PackOutput output, String modId,
+                                  @NotNull McLocale language,
+                                  ILangKeyValueCollection langKeyValueCollection) {
+        super(output, modId, language.mcCode());
+        this.language = language;
+        this.langKeyValueCollection = langKeyValueCollection;
+        this.translationMap = new HashMap<>();
+        this.orderedKeys = new ArrayList<>();
+        initializeTranslations();
     }
-    private void init() {
-       for (ILangKeyValue iLangKeyValue : langKeyValue.getValues()) {
-           lanKeyMap.put(language.mcCode(), iLangKeyValue.getLang(language));
-       }
-    }
-    private void addLang(String Key, String value) {
-        if (!objects.contains(Key)) objects.add(Key);
-        lanKeyMap.put(Key, value);
+
+    private void initializeTranslations() {
+        for (ILangKeyValue langKeyValue : langKeyValueCollection.getValues()) {
+            String key = langKeyValue.getKey();
+            String value = langKeyValue.getLang(language);
+
+            if (!translationMap.containsKey(key)) {
+                orderedKeys.add(key);
+            }
+            translationMap.put(key, value);
+        }
     }
 
     @Override
     protected void addTranslations() {
-        objects.forEach(key -> add(key, lanKeyMap.get(key)));
+        orderedKeys.forEach(key -> add(key, translationMap.get(key)));
+        validateTranslations();
+    }
+
+    private void validateTranslations() {
+        long addedCount = orderedKeys.stream()
+                .filter(translationMap::containsKey)
+                .count();
+
+        LOGGER.info("Added {}/{} translations for {}",
+                addedCount, orderedKeys.size(), language.mcCode());
     }
 }

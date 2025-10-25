@@ -4,7 +4,6 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraftforge.eventbus.api.IEventBus;
 
 import java.util.concurrent.Callable;
-import java.util.function.Consumer;
 
 /**
  * The interface Compat.

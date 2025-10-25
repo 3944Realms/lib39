@@ -6,7 +6,6 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
-import net.minecraftforge.common.capabilities.Capability;
 import net.minecraftforge.network.NetworkEvent;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;

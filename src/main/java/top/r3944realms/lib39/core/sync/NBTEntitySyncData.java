@@ -54,5 +54,6 @@ public abstract class NBTEntitySyncData implements IEntity, ISyncData<NBTEntityS
         if (isDirty()) {
             NetworkHandler.sendToAllPlayer(new SyncNBTCapDataEntityS2CPack(entityId(), id(), serializeNBT()));
         }
+        dirty = false;
     }
 }

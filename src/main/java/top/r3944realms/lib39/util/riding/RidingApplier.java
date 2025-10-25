@@ -54,11 +54,7 @@ public class RidingApplier {
             // 获取实体和载具
             Entity entity = entityProvider.apply(entityId);
             Entity vehicle = vehicleId != null ? entityProvider.apply(vehicleId) : null;
-
             if (entity == null) continue;
-
-            // ---------- 白名单保护 ----------
-
             if (vehicle != null) {
                     // 将当前节点的乘客挂回上层载具
                     for (RidingRelationship child : current.getPassengers()) {
