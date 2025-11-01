@@ -149,14 +149,23 @@ javadoc {
         addBooleanOption('html5', true)
     }
 
-    source = sourceSets.main.allJava
+    // 确保有源代码可供生成文档
+    if (sourceSets.main.allJava.files.any { it.exists() }) {
+        source = sourceSets.main.allJava
+    }
     classpath = configurations.compileClasspath
     exclude '**/test/**'
     exclude '**/internal/**'
+
+    // 确保输出目录存在
+    doFirst {
+        destinationDir.mkdirs()
+    }
 }
 
 tasks.register('javadocJar', Jar) {
-    archiveClassifier.set('javadoc')
+    archiveFileName = "${mod_id}-${minecraft_version}-${mod_version}-javadoc.jar"
+    archiveClassifier.set("javadoc")
     from tasks.javadoc
     dependsOn tasks.javadoc
 }
@@ -182,6 +191,25 @@ tasks.register('deobfJar', Jar) {
 
     dependsOn classes
 }
+tasks.register('sourceJar', Jar) {
+    from(sourceSets.main.allSource) // java
+    archiveFileName = "${mod_id}-${minecraft_version}-${mod_version}-sources.jar"
+    archiveClassifier.set("sources")
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+    manifest {
+        attributes([
+                'Specification-Title'     : mod_id,
+                'Specification-Vendor'    : mod_authors,
+                'Specification-Version'   : '1',
+                'Implementation-Title'    : project.name,
+                'Implementation-Version'  : archiveVersion,
+                'Implementation-Vendor'   : mod_authors,
+                'Implementation-Timestamp': new Date().format("yyyy-MM-dd'T'HH:mm:ssZ"),
+        ])
+    }
+    dependsOn classes
+}
+
 
 
 
@@ -192,6 +220,7 @@ publishing {
         mavenJava(MavenPublication) {
             artifactId = mod_id
             artifact deobfJar
+            artifact sourceJar
             artifact javadocJar
 
             pom {
@@ -322,6 +351,10 @@ tasks.register('publishToNexus') {
     description = 'Publishes all publications to LTD Nexus'
     dependsOn 'publishMavenJavaPublicationToLTDNexusRepository'
 }
+tasks.named('build') {
+    dependsOn javadocJar, sourceJar
+}
+
 
 tasks.register('publishLocal') {
     group = 'publishing'
@@ -348,13 +381,4 @@ idea {
 // 禁用模块元数据生成
 tasks.withType(GenerateModuleMetadata) {
     enabled = false
-}
-
-afterEvaluate {
-    tasks.named('deobfJar') {
-        doLast {
-            def jar = file(layout.buildDirectory.dir("repo") + "${mod_id}-${minecraft_version}-${mod_version}.jar")
-            if (jar.exists()) ant.delete(jar)
-        }
-    }
 }

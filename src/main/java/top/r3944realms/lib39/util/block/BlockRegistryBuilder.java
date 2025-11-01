@@ -54,6 +54,16 @@ public class BlockRegistryBuilder {
     }
 
     /**
+     * 注册对应的方块物品
+     *
+     * @param blockObject           the block object
+     * @param blockDeferredRegister the block deferred register
+     */
+    public void registerBlockItem(RegistryObject<Block> blockObject, @NotNull DeferredRegister<Block> blockDeferredRegister) {
+        blockDeferredRegister.register(this.registryName, blockObject);
+    }
+
+    /**
      * 内部方法：注册对应的方块物品
      */
     @SafeVarargs
