@@ -1,7 +1,7 @@
 package top.r3944realms.lib39.datagen.provider;
 
 import net.minecraft.data.PackOutput;
-import net.minecraftforge.common.data.LanguageProvider;
+import net.neoforged.neoforge.common.data.LanguageProvider;
 import org.jetbrains.annotations.NotNull;
 import top.r3944realms.lib39.datagen.value.ILangKeyValue;
 import top.r3944realms.lib39.datagen.value.ILangKeyValueCollection;

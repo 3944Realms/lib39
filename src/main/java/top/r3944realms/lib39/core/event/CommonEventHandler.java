@@ -7,21 +7,24 @@ import net.minecraft.world.entity.Entity;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.BuildCreativeModeTabContentsEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.entity.EntityJoinLevelEvent;
-import net.minecraftforge.event.entity.EntityLeaveLevelEvent;
-import net.minecraftforge.event.level.LevelEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
-import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.bus.api.SubscribeEvent;
+import net.neoforged.fml.ModLoadingContext;
+import net.neoforged.fml.common.EventBusSubscriber;
+import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.neoforged.neoforge.common.NeoForge;
+import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
+import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
+import net.neoforged.neoforge.event.entity.EntityLeaveLevelEvent;
+import net.neoforged.neoforge.event.level.LevelEvent;
+import net.neoforged.neoforge.event.tick.ServerTickEvent;
+import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.neoforged.neoforge.registries.DeferredHolder;
 import top.r3944realms.lib39.Lib39;
 import top.r3944realms.lib39.api.event.RegisterCompatEvent;
 import top.r3944realms.lib39.api.event.SyncManagerRegisterEvent;
 import top.r3944realms.lib39.core.compat.CompatManager;
+import top.r3944realms.lib39.core.network.NetworkHandler;
 import top.r3944realms.lib39.core.sync.ISyncData;
 import top.r3944realms.lib39.core.sync.SyncData2Manager;
 
@@ -38,7 +41,7 @@ public class CommonEventHandler {
      * The type Game.
      */
     @SuppressWarnings("unused")
-    @net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = Lib39.MOD_ID, bus = net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus.FORGE)
+    @EventBusSubscriber(modid = Lib39.MOD_ID)
     public static class Game extends CommonEventHandler {
         private static ServerLevel sl;
 
@@ -79,7 +82,7 @@ public class CommonEventHandler {
             synchronized (Game.class) {
                 if (!isSync2MInitialized) {
                     syncData2Manager = new SyncData2Manager();
-                    MinecraftForge.EVENT_BUS.post(new SyncManagerRegisterEvent(syncData2Manager));
+                    NeoForge.EVENT_BUS.post(new SyncManagerRegisterEvent(syncData2Manager));
                     isSync2MInitialized = true;
                     sl = serverLevel;
                     Lib39.LOGGER.info("SyncData2Manager initialized on world load");
@@ -107,13 +110,11 @@ public class CommonEventHandler {
          * @param event the event
          */
         @SubscribeEvent
-        public static void onServerTick(TickEvent.ServerTickEvent event) {
-            if (event.phase == TickEvent.Phase.END) {
-                if (syncData2Manager == null) return;
-                if (event.getServer().getTickCount() % 10 == 0)
-                    syncData2Manager.forEach(((resourceLocation, iSyncManager) -> iSyncManager.foreach(ISyncData::markDirty)));
-                syncData2Manager.forEach(((resourceLocation, iSyncManager) -> iSyncManager.foreach(ISyncData::checkIfDirtyThenUpdate)));
-            }
+        public static void onServerTick(ServerTickEvent.Post event) {
+            if (syncData2Manager == null) return;
+            if (event.getServer().getTickCount() % 10 == 0)
+                syncData2Manager.forEach(((resourceLocation, iSyncManager) -> iSyncManager.foreach(ISyncData::markDirty)));
+            syncData2Manager.forEach(((resourceLocation, iSyncManager) -> iSyncManager.foreach(ISyncData::checkIfDirtyThenUpdate)));
         }
 
         /**
@@ -124,7 +125,7 @@ public class CommonEventHandler {
         @SubscribeEvent
         public static void onEntityJoinWorld(EntityJoinLevelEvent event) {
             Entity entity = event.getEntity();
-            if (entity.level().isClientSide) return;
+            if (entity.level().isClientSide()) return;
 
             for (ResourceLocation id : syncData2Manager.getRegisteredKeys()) {
                 if (syncData2Manager.isEntityClassAllowed(id, entity.getClass())) {
@@ -141,7 +142,7 @@ public class CommonEventHandler {
         @SubscribeEvent
         public static void onEntityLeaveWorld(EntityLeaveLevelEvent event) {
             Entity entity = event.getEntity();
-            if (entity.level().isClientSide) return;
+            if (entity.level().isClientSide()) return;
 
             for (ResourceLocation id : syncData2Manager.getRegisteredKeys()) {
                 if (syncData2Manager.isEntityClassAllowed(id, entity.getClass())) {
@@ -155,10 +156,10 @@ public class CommonEventHandler {
      * The type Mod.
      */
     @SuppressWarnings("unused")
-    @net.minecraftforge.fml.common.Mod.EventBusSubscriber(modid = Lib39.MOD_ID, bus = net.minecraftforge.fml.common.Mod.EventBusSubscriber.Bus.MOD)
+    @EventBusSubscriber(modid = Lib39.MOD_ID)
     public static class Mod extends CommonEventHandler {
-        private static final Map<RegistryObject<Block>, ResourceKey<CreativeModeTab>[]> itemAddMap = new ConcurrentHashMap<>();
-        private static final Map<ResourceKey<CreativeModeTab>, List<RegistryObject<Block>>> tabToItemsMap = new ConcurrentHashMap<>();
+        private static final Map<DeferredHolder<Block, Block>, ResourceKey<CreativeModeTab>[]> itemAddMap = new ConcurrentHashMap<>();
+        private static final Map<ResourceKey<CreativeModeTab>, List<DeferredHolder<Block, Block>>> tabToItemsMap = new ConcurrentHashMap<>();
 
         /**
          * Gets compat manager.
@@ -182,11 +183,15 @@ public class CommonEventHandler {
         @SubscribeEvent
         public static void onFMLCommonSetup (FMLCommonSetupEvent event) {
             event.enqueueWork(() -> {
-                IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
-                IEventBus gameBus = MinecraftForge.EVENT_BUS;
+                IEventBus modBus = ModLoadingContext.get().getActiveContainer().getEventBus();
+                IEventBus gameBus = NeoForge.EVENT_BUS;
                 compatManager = new CompatManager(modBus, gameBus);
-                MinecraftForge.EVENT_BUS.post(new RegisterCompatEvent(compatManager));
+                gameBus.post(new RegisterCompatEvent(compatManager));
             });
+        }
+        @SubscribeEvent
+        public static void onPacketRegister (RegisterPayloadHandlersEvent event) {
+            NetworkHandler.registerPackets(event);
         }
 
         /**
@@ -196,7 +201,7 @@ public class CommonEventHandler {
          * @param tabs the tabs
          */
         @SafeVarargs
-        public static void addItemToTabs(RegistryObject<Block> item, ResourceKey<CreativeModeTab>... tabs) {
+        public static void addItemToTabs(DeferredHolder<Block, Block> item, ResourceKey<CreativeModeTab>... tabs) {
             itemAddMap.put(item, tabs);
 
             // 更新反向映射
@@ -212,9 +217,9 @@ public class CommonEventHandler {
          */
         @SubscribeEvent
         public static void onBuildCreativeTabContents(BuildCreativeModeTabContentsEvent event) {
-            List<RegistryObject<Block>> itemsForTab = tabToItemsMap.get(event.getTabKey());
+            List<DeferredHolder<Block, Block>> itemsForTab = tabToItemsMap.get(event.getTabKey());
             if (itemsForTab != null) {
-                itemsForTab.forEach(event::accept);
+                itemsForTab.forEach(i -> event.accept(i.get().asItem().getDefaultInstance(), CreativeModeTab.TabVisibility.PARENT_AND_SEARCH_TABS));
             }
         }
 
@@ -223,7 +228,7 @@ public class CommonEventHandler {
          *
          * @return the item add map
          */
-        public static Map<RegistryObject<Block>, ResourceKey<CreativeModeTab>[]> getItemAddMap() {
+        public static Map<DeferredHolder<Block, Block>, ResourceKey<CreativeModeTab>[]> getItemAddMap() {
             return itemAddMap;
         }
     }

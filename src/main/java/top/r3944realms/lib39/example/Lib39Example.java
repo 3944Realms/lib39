@@ -1,10 +1,9 @@
 package top.r3944realms.lib39.example;
 
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.neoforge.common.NeoForge;
 import top.r3944realms.lib39.example.core.event.ExCommonEventHandler;
-import top.r3944realms.lib39.example.core.network.ExNetworkHandler;
+import top.r3944realms.lib39.example.core.register.ExLib39Attachments;
 import top.r3944realms.lib39.example.core.register.ExLib39Items;
 
 /**
@@ -16,22 +15,19 @@ public class Lib39Example {
     /**
      * Instantiates a new Lib 39 example.
      */
-    public Lib39Example() {
+    public Lib39Example(IEventBus modEventBus) {
         if (!registered) {
-            init();
-            registerToEventBus();
+            init(modEventBus);
+            registerToEventBus(modEventBus);
             registered = true;
         }
     }
-    private void init() {
-        IEventBus modEventBus = FMLJavaModLoadingContext.get().getModEventBus();
+    private void init(IEventBus modEventBus) {
         ExLib39Items.register(modEventBus);
-        ExNetworkHandler.register();
+        ExLib39Attachments.register(modEventBus);
     }
 
-    private void registerToEventBus() {
-        IEventBus modBus = FMLJavaModLoadingContext.get().getModEventBus();
-        IEventBus gameBus = MinecraftForge.EVENT_BUS;
+    private void registerToEventBus(IEventBus modBus) {
 //        DistExecutor.unsafeCallWhenOn(Dist.CLIENT, () ->  {
 //            modBus.register(ExClientEventHandler.Mod.class);
 //            gameBus.register(ExClientEventHandler.Game.class);
@@ -43,7 +39,7 @@ public class Lib39Example {
 //            return null;
 //        });
         modBus.register(ExCommonEventHandler.Mod.class);
-        gameBus.register(ExCommonEventHandler.Game.class);
+        NeoForge.EVENT_BUS.register(ExCommonEventHandler.Game.class);
 
     }
 

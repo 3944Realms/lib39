@@ -1,20 +1,25 @@
 package top.r3944realms.lib39.example.content.capability;
 
+import net.minecraft.network.FriendlyByteBuf;
+import net.minecraft.network.codec.ByteBufCodecs;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
-import top.r3944realms.lib39.core.sync.NBTEntitySyncData;
+import net.neoforged.neoforge.common.util.ValueIOSerializable;
+import top.r3944realms.lib39.core.sync.IEntity;
 
 /**
  * The type Abstracted test sync data.
  */
 @SuppressWarnings("unused")
-public abstract class AbstractedTestSyncData extends NBTEntitySyncData {
+public abstract class AbstractedTestSyncData implements ValueIOSerializable, IEntity {
+
     /**
      * Instantiates a new Nbt sync data.
      *
      * @param id the id
      */
     protected AbstractedTestSyncData(ResourceLocation id) {
-        super(id);
+
     }
 
     /**
@@ -126,9 +131,16 @@ public abstract class AbstractedTestSyncData extends NBTEntitySyncData {
      * 测试数据对象
      */
     public static class TestData {
+        public static StreamCodec<FriendlyByteBuf, TestData> CODEC = StreamCodec.composite(
+                ByteBufCodecs.STRING_UTF8, TestData::getName,
+                ByteBufCodecs.INT, TestData::getValue,
+                ByteBufCodecs.BOOL, TestData::isFlag,
+                TestData::new
+        );
         private String name;
         private int value;
         private boolean flag;
+
 
         /**
          * Instantiates a new Test data.

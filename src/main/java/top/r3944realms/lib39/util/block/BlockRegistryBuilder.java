@@ -4,8 +4,9 @@ import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.block.Block;
-import net.minecraftforge.registries.DeferredRegister;
-import net.minecraftforge.registries.RegistryObject;
+import net.neoforged.neoforge.registries.DeferredBlock;
+import net.neoforged.neoforge.registries.DeferredHolder;
+import net.neoforged.neoforge.registries.DeferredRegister;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import top.r3944realms.lib39.core.event.CommonEventHandler;
@@ -18,7 +19,7 @@ import java.util.function.Supplier;
 @SuppressWarnings({"UnusedReturnValue", "unused"})
 public class BlockRegistryBuilder {
     private String registryName;
-    private RegistryObject<Block> blockObject;
+    private DeferredHolder<Block, Block> blockObject;
 
     /**
      * 创建新的构建器实例
@@ -57,7 +58,7 @@ public class BlockRegistryBuilder {
      * 内部方法：注册对应的方块物品
      */
     @SafeVarargs
-    private void registerBlockItem(RegistryObject<Block> blockObject, ResourceKey<CreativeModeTab>... creativeTabs) {
+    private void registerBlockItem(DeferredHolder<Block, Block> blockObject, ResourceKey<CreativeModeTab>... creativeTabs) {
         CommonEventHandler.Mod.addItemToTabs(blockObject, creativeTabs);
     }
 
@@ -92,7 +93,7 @@ public class BlockRegistryBuilder {
      *
      * @return the registry object
      */
-    public RegistryObject<Block> build() {
+    public DeferredHolder<Block, Block> build() {
         return this.blockObject;
     }
 

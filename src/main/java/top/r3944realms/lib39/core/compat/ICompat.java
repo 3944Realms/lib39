@@ -1,7 +1,7 @@
 package top.r3944realms.lib39.core.compat;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.eventbus.api.IEventBus;
+import net.neoforged.bus.api.IEventBus;
 
 import java.util.concurrent.Callable;
 

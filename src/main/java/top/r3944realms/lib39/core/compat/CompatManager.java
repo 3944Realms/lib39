@@ -1,9 +1,8 @@
 package top.r3944realms.lib39.core.compat;
 
 import net.minecraft.resources.ResourceLocation;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.common.Mod;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import top.r3944realms.lib39.Lib39;
@@ -58,7 +57,7 @@ public class CompatManager {
      * @param compat    the compat
      */
     public void registerCompat(String namespace, String path, ICompat compat) {
-        registerCompat(new ResourceLocation(namespace, path), compat);
+        registerCompat(ResourceLocation.fromNamespaceAndPath(namespace, path), compat);
     }
 
     /**
@@ -67,8 +66,8 @@ public class CompatManager {
      * @param dists the dists
      * @param bus   the bus
      */
-    public void addListenerForAll(@Nullable Dist dists, Mod.EventBusSubscriber.Bus bus) {
-        listenerConfigs.add(new ListenerConfig(null, dists, bus));
+    public void addListenerForAll(@Nullable Dist dists, boolean isModbus) {
+        listenerConfigs.add(new ListenerConfig(null, dists, isModbus));
     }
 
     /**
@@ -78,8 +77,8 @@ public class CompatManager {
      * @param dists    the dists
      * @param bus      the bus
      */
-    public void addListenerForCompat(ResourceLocation compatId, @Nullable Dist dists, Mod.EventBusSubscriber.Bus bus) {
-        listenerConfigs.add(new ListenerConfig(compatId, dists, bus));
+    public void addListenerForCompat(ResourceLocation compatId, @Nullable Dist dists, boolean isModbus) {
+        listenerConfigs.add(new ListenerConfig(compatId, dists, isModbus));
     }
 
     /**
@@ -89,8 +88,8 @@ public class CompatManager {
      * @param bus      the bus
      * @param consumer the consumer
      */
-    public void addListenerForLoaded(@Nullable Dist dists, Mod.EventBusSubscriber.Bus bus, Consumer<IEventBus> consumer) {
-        listenerConfigs.add(new ListenerConfig(null, dists, bus) {
+    public void addListenerForLoaded(@Nullable Dist dists, boolean isModbus, Consumer<IEventBus> consumer) {
+        listenerConfigs.add(new ListenerConfig(null, dists, isModbus) {
             @Override
             boolean shouldApply(@NotNull ICompat compat) {
                 return super.shouldApply(compat);
@@ -167,14 +166,14 @@ public class CompatManager {
             if (config.dists != null) {
                 switch (config.dists) {
                     case CLIENT -> {
-                            if (config.bus == Mod.EventBusSubscriber.Bus.FORGE) {
+                            if (!config.isModBus) {
                                 compat.addClientGameListener(gameEventBus);
                             } else {
                                 compat.addClientModListener(modEventBus);
                             }
                     }
                     case DEDICATED_SERVER -> {
-                            if (config.bus == Mod.EventBusSubscriber.Bus.FORGE) {
+                            if (!config.isModBus) {
                                 compat.addServerGameListener(gameEventBus);
                             } else {
                                 compat.addServerModListener(modEventBus);
@@ -183,7 +182,7 @@ public class CompatManager {
                 }
             } else {
                 // 通用监听器
-                if (config.bus == Mod.EventBusSubscriber.Bus.FORGE) {
+                if (!config.isModBus) {
                     compat.addCommonGameListener(gameEventBus);
                 } else {
                     compat.addCommonModListener(modEventBus);
@@ -204,9 +203,9 @@ public class CompatManager {
     private @NotNull String getListenerTypeName(@NotNull ListenerConfig config) {
         if (config.dists != null) {
             return config.dists.name().toLowerCase() + " " +
-                    (config.bus == Mod.EventBusSubscriber.Bus.FORGE ? "game" : "mod");
+                    (!config.isModBus ? "game" : "mod");
         } else {
-            return "common " + (config.bus == Mod.EventBusSubscriber.Bus.FORGE ? "game" : "mod");
+            return "common " + (!config.isModBus ? "game" : "mod");
         }
     }
 
@@ -217,8 +216,8 @@ public class CompatManager {
      * @param compatId the compat id
      * @param bus      the bus
      */
-    public void addListenerForCompat(ResourceLocation compatId, Mod.EventBusSubscriber.Bus bus) {
-        addListenerForCompat(compatId, null, bus);
+    public void addListenerForCompat(ResourceLocation compatId, boolean isModbus) {
+        addListenerForCompat(compatId, null, isModbus);
     }
 
     private static class ListenerConfig {
@@ -233,7 +232,7 @@ public class CompatManager {
         /**
          * The Bus.
          */
-        final Mod.EventBusSubscriber.Bus bus;
+        final boolean isModBus;
 
         /**
          * Instantiates a new Listener config.
@@ -242,10 +241,10 @@ public class CompatManager {
          * @param dists    the dists
          * @param bus      the bus
          */
-        ListenerConfig(ResourceLocation compatId, Dist dists, Mod.EventBusSubscriber.Bus bus) {
+        ListenerConfig(ResourceLocation compatId, Dist dists, boolean isModbus) {
             this.compatId = compatId;
             this.dists = dists;
-            this.bus = bus;
+            this.isModBus = isModbus;
         }
 
         /**
