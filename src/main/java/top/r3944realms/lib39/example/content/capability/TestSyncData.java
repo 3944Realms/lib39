@@ -1,21 +1,14 @@
 package top.r3944realms.lib39.example.content.capability;
 
+import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.codec.ByteBufCodecs;
-import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.storage.ValueInput;
-import net.minecraft.world.level.storage.ValueOutput;
-import net.neoforged.neoforge.attachment.IAttachmentHolder;
 import org.jetbrains.annotations.NotNull;
 import top.r3944realms.lib39.Lib39;
-import top.r3944realms.lib39.example.core.register.ExLib39Attachments;
-import top.r3944realms.lib39.example.core.register.ExLib39ItemResourceKeys;
-import top.r3944realms.lib39.util.storage.valueio.ValueInputReader;
-import top.r3944realms.lib39.util.storage.valueio.ValueOutputWriter;
+import top.r3944realms.lib39.util.nbt.NBTReader;
+import top.r3944realms.lib39.util.nbt.NBTWriter;
 
-import java.util.Random;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
@@ -23,59 +16,25 @@ import java.util.concurrent.atomic.AtomicReference;
 /**
  * 测试同步数据实现
  */
+@SuppressWarnings("unused")
 public class TestSyncData extends AbstractedTestSyncData {
-    private static final Random RANDOM = new Random();
+    /**
+     * The constant ID.
+     */
+    public static final ResourceLocation ID = new ResourceLocation(Lib39.MOD_ID, "test_sync_data");
 
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath(Lib39.MOD_ID, "test_sync_data");
+    // NBT 键常量
+    private static final String NBT_KEY_STRING = "test_string";
+    private static final String NBT_KEY_INT = "test_int";
+    private static final String NBT_KEY_BOOLEAN = "test_boolean";
+    private static final String NBT_KEY_DOUBLE = "test_double";
+    private static final String NBT_KEY_COUNTER = "counter";
+    private static final String NBT_KEY_SYNC_TIME = "last_sync_time";
+    private static final String NBT_KEY_CUSTOM_DATA = "custom_data";
+    private static final String NBT_KEY_CUSTOM_NAME = "name";
+    private static final String NBT_KEY_CUSTOM_VALUE = "value";
+    private static final String NBT_KEY_CUSTOM_FLAG = "flag";
 
-    // 网络同步编解码器
-    public static final StreamCodec<FriendlyByteBuf, TestSyncData> CODEC = StreamCodec.composite(
-            ByteBufCodecs.STRING_UTF8, TestSyncData::getTestString,
-            ByteBufCodecs.INT, TestSyncData::getTestInt,
-            ByteBufCodecs.BOOL, TestSyncData::isTestBoolean,
-            ByteBufCodecs.DOUBLE, TestSyncData::getTestDouble,
-            TestData.CODEC, TestSyncData::getCustomData,
-            ByteBufCodecs.INT, TestSyncData::getCounter,
-            ByteBufCodecs.LONG, TestSyncData::getLastSyncTime,
-            (testString, testInt, testBoolean, testDouble, customData, counter, lastSyncTime) -> {
-                TestSyncData data = new TestSyncData();
-                data.testString = testString;
-                data.testInt = testInt;
-                data.testBoolean = testBoolean;
-                data.testDouble = testDouble;
-                data.customData = customData;
-                data.counter = counter;
-                data.lastSyncTime = lastSyncTime;
-                return data;
-            }
-    );
-    /** 重置为默认值 */
-    public void resetToDefaults() {
-        this.testString = "default_string";
-        this.testInt = 0;
-        this.testDouble = 0.0;
-        this.testBoolean = false;
-        this.counter = 0;
-        this.lastSyncTime = System.currentTimeMillis();
-        this.customData = new TestData("init", 0, false);
-        self.syncData(ExLib39Attachments.TEST_DATA_ATTACHMENT);
-    }
-
-    /** 随机生成一组数据 */
-    public void generateRandomData() {
-        this.testString = "rand_" + RANDOM.nextInt(10000);
-        this.testInt = RANDOM.nextInt(1000);
-        this.testDouble = RANDOM.nextDouble() * 100.0;
-        this.testBoolean = RANDOM.nextBoolean();
-        this.counter = RANDOM.nextInt(20);
-        this.lastSyncTime = System.currentTimeMillis();
-        this.customData = new TestData(
-                "custom_" + RANDOM.nextInt(1000),
-                RANDOM.nextInt(500),
-                RANDOM.nextBoolean()
-        );
-        self.syncData(ExLib39Attachments.TEST_DATA_ATTACHMENT);
-    }
     // 数据字段
     private String testString = "default_value";
     private int testInt = 42;
@@ -86,134 +45,332 @@ public class TestSyncData extends AbstractedTestSyncData {
     private TestData customData = new TestData("default", 100, false);
     private Entity self;
 
-    // --- 构造函数区域 ---
-
-    /** 默认构造函数（反序列化/同步使用） */
-    public TestSyncData() {
-        super(ID);
-    }
-
-    /** 用于实体附加 */
+    /**
+     * 构造函数
+     *
+     * @param entity 关联的实体
+     */
     public TestSyncData(Entity entity) {
         super(ID);
         this.self = entity;
     }
 
-    /** 用于 AttachmentType.serializable(holder -> ...) */
-    public TestSyncData(IAttachmentHolder holder) {
-        this(holder instanceof Entity e ? e : null);
-        if (self == null) throw new IllegalArgumentException("TestSyncData must be attached to Entity");
+    /**
+     * 构造函数（用于测试）
+     *
+     * @param entityId 实体ID
+     * @param self     the self
+     */
+    public TestSyncData(int entityId, Entity self) {
+        super(ID);
+        this.self = self;
     }
 
-    // --- 数据逻辑部分 ---
-
-    public String getTestString() { return testString; }
-    public void setTestString(String s) {
-        this.testString = s;
-        self.syncData(ExLib39Attachments.TEST_DATA_ATTACHMENT);
+    /**
+     * 构造函数（用于数据包反序列化）
+     *
+     * @param buf 字节缓冲区
+     */
+    public TestSyncData(FriendlyByteBuf buf) {
+        super(ID);
+        this.self = null; // 实体在从数据包重建时可能为null，需要在接收端设置
+        fromBytes(buf);
     }
 
-    public int getTestInt() { return testInt; }
-    public void setTestInt(int i) {
-        this.testInt = i;
-        self.syncData(ExLib39Attachments.TEST_DATA_ATTACHMENT);
+    /**
+     * 将数据写入字节缓冲区（用于网络传输）
+     *
+     * @param buf 字节缓冲区
+     */
+    public void toBytes(FriendlyByteBuf buf) {
+        // 写入基本类型字段
+        buf.writeUtf(testString != null ? testString : "");
+        buf.writeInt(testInt);
+        buf.writeBoolean(testBoolean);
+        buf.writeDouble(testDouble);
+        buf.writeInt(counter);
+        buf.writeLong(lastSyncTime);
+
+        // 写入自定义数据
+        if (customData != null) {
+            buf.writeUtf(customData.getName() != null ? customData.getName() : "");
+            buf.writeInt(customData.getValue());
+            buf.writeBoolean(customData.isFlag());
+        } else {
+            buf.writeUtf("");
+            buf.writeInt(0);
+            buf.writeBoolean(false);
+        }
+
+        // 写入实体ID（如果实体存在）
+        if (self != null) {
+            buf.writeInt(self.getId());
+        } else {
+            buf.writeInt(-1);
+        }
+
+        // 写入脏数据状态
+        buf.writeBoolean(isDirty());
     }
 
-    public boolean isTestBoolean() { return testBoolean; }
-    public void setTestBoolean(boolean b) { this.testBoolean = b;
-        self.syncData(ExLib39Attachments.TEST_DATA_ATTACHMENT);
+    /**
+     * 从字节缓冲区读取数据（用于网络传输）
+     *
+     * @param buf 字节缓冲区
+     */
+    public void fromBytes(@NotNull FriendlyByteBuf buf) {
+        // 读取基本类型字段
+        this.testString = buf.readUtf(32767); // Minecraft字符串最大长度
+        this.testInt = buf.readInt();
+        this.testBoolean = buf.readBoolean();
+        this.testDouble = buf.readDouble();
+        this.counter = buf.readInt();
+        this.lastSyncTime = buf.readLong();
+
+        // 读取自定义数据
+        String customName = buf.readUtf();
+        int customValue = buf.readInt();
+        boolean customFlag = buf.readBoolean();
+        this.customData = new TestData(customName, customValue, customFlag);
+
+        // 读取实体ID（在接收端可能需要额外处理）
+        int entityId = buf.readInt();
+
+        // 读取脏数据状态
+        boolean wasDirty = buf.readBoolean();
+        if (wasDirty) {
+            markDirty();
+        }
     }
 
-    public double getTestDouble() { return testDouble; }
-    public void setTestDouble(double d) {
-        this.testDouble = d;
-        self.syncData(ExLib39Attachments.TEST_DATA_ATTACHMENT);
+    /**
+     * 静态方法：从字节缓冲区创建 TestSyncData 实例
+     *
+     * @param buf 字节缓冲区
+     * @return 新的 TestSyncData 实例
+     */
+    public static TestSyncData staticFromBytes(FriendlyByteBuf buf) {
+        return new TestSyncData(buf);
     }
 
-    public int getCounter() { return counter; }
+    @Override
+    public String getTestString() {
+        return testString;
+    }
+
+    @Override
+    public void setTestString(String value) {
+        if (!java.util.Objects.equals(this.testString, value)) {
+            this.testString = value;
+            markDirty();
+        }
+    }
+
+    @Override
+    public int getTestInt() {
+        return testInt;
+    }
+
+    @Override
+    public void setTestInt(int value) {
+        if (this.testInt != value) {
+            this.testInt = value;
+            markDirty();
+        }
+    }
+
+    @Override
+    public boolean isTestBoolean() {
+        return testBoolean;
+    }
+
+    @Override
+    public void setTestBoolean(boolean value) {
+        if (this.testBoolean != value) {
+            this.testBoolean = value;
+            markDirty();
+        }
+    }
+
+    @Override
+    public double getTestDouble() {
+        return testDouble;
+    }
+
+    @Override
+    public void setTestDouble(double value) {
+        if (this.testDouble != value) {
+            this.testDouble = value;
+            markDirty();
+        }
+    }
+
+    @Override
+    public int getCounter() {
+        return counter;
+    }
+
+    @Override
     public void incrementCounter() {
         this.counter++;
-        self.syncData(ExLib39Attachments.TEST_DATA_ATTACHMENT);
+        markDirty();
     }
 
-    public long getLastSyncTime() { return lastSyncTime; }
+    @Override
+    public long getLastSyncTime() {
+        return lastSyncTime;
+    }
+
+    @Override
     public void updateSyncTime() {
         this.lastSyncTime = System.currentTimeMillis();
-        self.syncData(ExLib39Attachments.TEST_DATA_ATTACHMENT);
+        markDirty();
     }
 
-    public TestData getCustomData() { return customData; }
+    @Override
+    public TestData getCustomData() {
+        return customData;
+    }
+
+    @Override
     public void setCustomData(TestData data) {
-        this.customData = data;
-        self.syncData(ExLib39Attachments.TEST_DATA_ATTACHMENT);
+        if (data == null) {
+            throw new IllegalArgumentException("Custom data cannot be null");
+        }
+        if (!java.util.Objects.equals(this.customData, data)) {
+            this.customData = data;
+            markDirty();
+        }
     }
 
+    @Override
     public boolean validateData() {
-        return testString != null && !testString.isEmpty()
-                && customData != null && customData.getName() != null
-                && counter >= 0 && testInt >= 0;
-    }
-
-    // --- 实体管理 ---
-
-    public int entityId() { return self != null ? self.getId() : -1; }
-
-    public void setSelf(Entity entity) {
-        this.self = entity;
-    }
-    public TestSyncData createSyncCopy(Entity entity) {
-        TestSyncData copy = new TestSyncData(entity);
-        copy.testString = testString;
-        copy.testInt = testInt;
-        copy.testBoolean = testBoolean;
-        copy.testDouble = testDouble;
-        copy.counter = counter;
-        copy.lastSyncTime = lastSyncTime;
-        copy.customData = new TestData(customData.getName(), customData.getValue(), customData.isFlag());
-        return copy;
+        return testString != null &&
+                !testString.isEmpty() &&
+                customData != null &&
+                customData.getName() != null &&
+                !customData.getName().isEmpty() &&
+                counter >= 0 &&
+                testInt >= 0;
     }
 
     @Override
-    public void serialize(@NotNull ValueOutput out) {
-        ValueOutputWriter.of(out)
-                .string("test_string", testString)
-                .intValue("test_int", testInt)
-                .booleanValue("test_boolean", testBoolean)
-                .doubleValue("test_double", testDouble)
-                .intValue("counter", counter)
-                .longValue("last_sync_time", lastSyncTime)
-                .nested("custom_data", n ->
-                        n.string("name", customData.getName())
-                                .intValue("value", customData.getValue())
-                                .booleanValue("flag", customData.isFlag()));
+    public CompoundTag serializeNBT() {
+        return NBTWriter.builder()
+                .string(NBT_KEY_STRING, testString)
+                .intValue(NBT_KEY_INT, testInt)
+                .booleanValue(NBT_KEY_BOOLEAN, testBoolean)
+                .doubleValue(NBT_KEY_DOUBLE, testDouble)
+                .intValue(NBT_KEY_COUNTER, counter)
+                .longValue(NBT_KEY_SYNC_TIME, lastSyncTime)
+                .compound(
+                        NBT_KEY_CUSTOM_DATA,
+                        NBTWriter.builder()
+                                .string(NBT_KEY_CUSTOM_NAME, customData.getName())
+                                .intValue(NBT_KEY_CUSTOM_VALUE, customData.getValue())
+                                .booleanValue(NBT_KEY_CUSTOM_FLAG, customData.isFlag())
+                                .build()
+                ).build();
     }
 
     @Override
-    public void deserialize(@NotNull ValueInput in) {
-        ValueInputReader.of(in)
-                .string("test_string", s -> testString = s)
-                .intValue("test_int", i -> testInt = i)
-                .booleanValue("test_boolean", b -> testBoolean = b)
-                .doubleValue("test_double", d -> testDouble = d)
-                .intValue("counter", c -> counter = c)
-                .longValue("last_sync_time", t -> lastSyncTime = t)
-                .nested("custom_data", n -> {
-                    AtomicReference<String> name = new AtomicReference<>("default");
-                    AtomicInteger value = new AtomicInteger(100);
+    public void deserializeNBT(CompoundTag nbt) {
+        NBTReader.of(nbt)
+                .intValue(NBT_KEY_INT, integer -> testInt = integer)
+                .string(NBT_KEY_STRING, string -> testString = string)
+                .booleanValue(NBT_KEY_BOOLEAN, bool -> testBoolean = bool)
+                .intValue(NBT_KEY_COUNTER, integer -> counter = integer)
+                .doubleValue(NBT_KEY_DOUBLE, dou -> testDouble = dou)
+                .longValue(NBT_KEY_SYNC_TIME, sync -> lastSyncTime = sync)
+                .compound(NBT_KEY_CUSTOM_DATA, customDataTag -> {
+                    AtomicReference<String> name = new AtomicReference<>("");
+                    AtomicInteger value = new AtomicInteger(-1);
                     AtomicBoolean flag = new AtomicBoolean(false);
-                    n.string("name", name::set)
-                            .intValue("value", value::set)
-                            .booleanValue("flag", flag::set);
-                    customData = new TestData(name.get(), value.get(), flag.get());
+                    NBTReader.of(customDataTag)
+                            .string(NBT_KEY_CUSTOM_NAME, name::set)
+                            .intValue(NBT_KEY_CUSTOM_VALUE, value::set)
+                            .booleanValue(NBT_KEY_CUSTOM_FLAG, flag::set);
+                    this.customData = new TestData(name.get(), value.get(), flag.get());
                 });
     }
 
     @Override
+    public int entityId() {
+        return self != null ? self.getId() : -1;
+    }
+
+    /**
+     * 设置关联的实体
+     *
+     * @param entity 关联的实体
+     */
+    public void setEntity(Entity entity) {
+        this.self = entity;
+    }
+
+
+    /**
+     * 获取所有数据的字符串表示（用于调试）
+     */
+    @Override
     public String toString() {
         return String.format(
-                "TestSyncData[%s,id=%d]{str=%s,int=%d,bool=%s,double=%.2f,counter=%d,time=%d,custom=%s}",
-                self == null ? "null" : self.getClass().getSimpleName(),
-                entityId(), testString, testInt, testBoolean, testDouble, counter, lastSyncTime, customData
+                "TestSyncData{id=%d, string='%s', int=%d, boolean=%s, double=%.2f, counter=%d, lastSync=%d, custom=%s}",
+                self.getId(), testString, testInt, testBoolean, testDouble, counter, lastSyncTime, customData
         );
     }
+
+    /**
+     * 重置为默认值
+     */
+    public void resetToDefaults() {
+        testString = "default_value";
+        testInt = 42;
+        testBoolean = true;
+        testDouble = 3.14159;
+        counter = 0;
+        lastSyncTime = 0L;
+        customData = new TestData("default", 100, false);
+        markDirty();
+    }
+
+    /**
+     * 生成随机测试数据
+     */
+    public void generateRandomData() {
+        testString = "random_" + System.currentTimeMillis();
+        testInt = (int) (Math.random() * 1000);
+        testBoolean = Math.random() > 0.5;
+        testDouble = Math.random() * 100.0;
+        counter++;
+        lastSyncTime = System.currentTimeMillis();
+        customData = new TestData(
+                "custom_" + counter,
+                (int) (Math.random() * 500),
+                Math.random() > 0.5
+        );
+        markDirty();
+    }
+
+    /**
+     * 创建一个不依赖实体的副本（用于网络传输）
+     *
+     * @return 不包含实体引用的副本 test sync data
+     */
+    public TestSyncData createNetworkCopy() {
+        TestSyncData copy = new TestSyncData((Entity) null);
+        copy.testString = this.testString;
+        copy.testInt = this.testInt;
+        copy.testBoolean = this.testBoolean;
+        copy.testDouble = this.testDouble;
+        copy.counter = this.counter;
+        copy.lastSyncTime = this.lastSyncTime;
+        copy.customData = new TestData(
+                this.customData.getName(),
+                this.customData.getValue(),
+                this.customData.isFlag()
+        );
+        return copy;
+    }
+
 }

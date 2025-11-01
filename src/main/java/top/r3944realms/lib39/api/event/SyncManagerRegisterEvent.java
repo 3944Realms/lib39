@@ -2,7 +2,8 @@ package top.r3944realms.lib39.api.event;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
-import net.neoforged.bus.api.Event;
+import net.minecraftforge.common.capabilities.Capability;
+import net.minecraftforge.eventbus.api.Event;
 import top.r3944realms.lib39.core.sync.ISyncData;
 import top.r3944realms.lib39.core.sync.ISyncManager;
 import top.r3944realms.lib39.core.sync.SyncData2Manager;
@@ -38,6 +39,22 @@ public class SyncManagerRegisterEvent extends Event {
         return syncs2Manager;
     }
 
+    /**
+     * 类型安全的同步管理器注册
+     *
+     * @param <K>         the type parameter
+     * @param <T>         the type parameter
+     * @param id          the id
+     * @param syncManager the sync manager
+     * @param capability  the capability
+     */
+    public <K, T extends ISyncData<?>> void registerSyncManager(
+            ResourceLocation id,
+            ISyncManager<K, T> syncManager,
+            Capability<T> capability
+    ) {
+        syncs2Manager.registerManager(id, syncManager, entity -> entity.getCapability(capability).resolve());
+    }
 
     /**
      * 类型安全的同步管理器注册
@@ -86,6 +103,16 @@ public class SyncManagerRegisterEvent extends Event {
         syncs2Manager.disallowEntityClass(id, entityClasses);
     }
 
+    /**
+     * 绑定能力（用于分离注册的情况）
+     *
+     * @param <T>        the type parameter
+     * @param id         必须先注册安全同步管理器，再绑定Cap，否则会抛出{@link IllegalStateException 未找到对应安全同步管理器}
+     * @param capability the capability
+     */
+    public <T extends ISyncData<?>> void bindCapability(ResourceLocation id, Capability<T> capability) {
+        syncs2Manager.bindDataGetter(id, entity -> entity.getCapability(capability).resolve());
+    }
 
     /**
      * 解绑数据提供者
@@ -96,6 +123,27 @@ public class SyncManagerRegisterEvent extends Event {
         syncs2Manager.unbindDataProvider(id);
     }
 
+    /**
+     * 完整的类型安全注册
+     *
+     * @param <K>                  the type parameter
+     * @param <T>                  the type parameter
+     * @param id                   the id
+     * @param syncManager          the sync manager
+     * @param capability           the capability
+     * @param allowedEntityClasses the allowed entity classes
+     */
+    public <K, T extends ISyncData<?>> void registerComplete(
+            ResourceLocation id,
+            ISyncManager<K, T> syncManager,
+            Capability<T> capability,
+            Class<?>... allowedEntityClasses
+    ) {
+        registerSyncManager(id, syncManager, capability);
+        if (allowedEntityClasses.length > 0) {
+            addAllowEntityClass(id, allowedEntityClasses);
+        }
+    }
 
     /**
      * 完整的类型安全注册

@@ -1,20 +1,20 @@
 package top.r3944realms.lib39.example.core.event;
 
 import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.vehicle.Boat;
-import net.minecraft.world.entity.vehicle.Minecart;
-import net.neoforged.bus.api.SubscribeEvent;
-import net.neoforged.fml.event.lifecycle.FMLCommonSetupEvent;
-import net.neoforged.neoforge.capabilities.RegisterCapabilitiesEvent;
-import net.neoforged.neoforge.data.event.GatherDataEvent;
-import net.neoforged.neoforge.event.entity.EntityJoinLevelEvent;
-import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
+import net.minecraftforge.common.capabilities.RegisterCapabilitiesEvent;
+import net.minecraftforge.data.event.GatherDataEvent;
+import net.minecraftforge.event.AttachCapabilitiesEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import top.r3944realms.lib39.api.event.SyncManagerRegisterEvent;
+import top.r3944realms.lib39.core.sync.CachedSyncManager;
+import top.r3944realms.lib39.example.content.capability.AbstractedTestSyncData;
 import top.r3944realms.lib39.example.content.capability.ExCapabilityHandler;
 import top.r3944realms.lib39.example.content.capability.TestSyncData;
-import top.r3944realms.lib39.example.core.network.ExNetworkHandler;
-import top.r3944realms.lib39.example.core.register.ExLib39Attachments;
-import top.r3944realms.lib39.example.datagen.ExLib39DataGenEvent;
+import top.r3944realms.lib39.example.datagen.EXLib39DataGenEvent;
+
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * The type Common handler.
@@ -26,17 +26,39 @@ public class ExCommonEventHandler {
     @SuppressWarnings("unused")
 
     public static class Game extends ExCommonEventHandler {
+        /**
+         * Attach capability.
+         *
+         * @param event the event
+         */
         @SubscribeEvent
-        public static void onEntityJoinLevel(EntityJoinLevelEvent event) {
-            Entity entity = event.getEntity();
-            if (entity instanceof LivingEntity || entity instanceof Boat || entity instanceof Minecart) {
-                TestSyncData data = entity.getData(ExLib39Attachments.TEST_DATA_ATTACHMENT);
-                if (data.entityId() == -1) {
-                    data.setSelf(entity);
-                }
-            }
+        public static void attachCapability(AttachCapabilitiesEvent<?> event) {
+            ExCapabilityHandler.attachCapability(event);
         }
+
+        /**
+         * On register sync.
+         *
+         * @param event the event
+         */
+        @SubscribeEvent
+        public static void onRegisterSync (SyncManagerRegisterEvent event) {
+            event.registerSyncManager(
+                    TestSyncData.ID,
+                    new CachedSyncManager<Entity, AbstractedTestSyncData>() {
+                        private final Map<Entity, AbstractedTestSyncData> syncDataMap = new ConcurrentHashMap<>();
+                        @Override
+                        public Map<Entity, AbstractedTestSyncData> getSyncMap() {
+                            return syncDataMap;
+                        }
+                    },
+                    ExCapabilityHandler.TEST_CAP
+
+            );
+        }
+
     }
+
 
     /**
      * The type Mod.
@@ -62,7 +84,7 @@ public class ExCommonEventHandler {
          */
         @SubscribeEvent
         public static void registerCapability(RegisterCapabilitiesEvent event) {
-            ExCapabilityHandler.registerCapabilities(event);
+            ExCapabilityHandler.registerCapability(event);
         }
 
         /**
@@ -71,12 +93,8 @@ public class ExCommonEventHandler {
          * @param event the event
          */
         @SubscribeEvent
-        public static void gatherData(GatherDataEvent.Client event) {
-            ExLib39DataGenEvent.gatherData(event);
-        }
-        @SubscribeEvent
-        public static void registerPayloadPacket (RegisterPayloadHandlersEvent event) {
-            ExNetworkHandler.registerPackets(event);
+        public static void gatherData(GatherDataEvent event) {
+            EXLib39DataGenEvent.gatherData(event);
         }
     }
 }

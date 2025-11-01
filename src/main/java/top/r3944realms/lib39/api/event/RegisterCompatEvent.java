@@ -1,8 +1,8 @@
 package top.r3944realms.lib39.api.event;
 
 import net.minecraft.resources.ResourceLocation;
-import net.neoforged.bus.api.Event;
-import net.neoforged.fml.event.IModBusEvent;
+import net.minecraftforge.eventbus.api.Event;
+import net.minecraftforge.fml.event.IModBusEvent;
 import top.r3944realms.lib39.core.compat.CompatManager;
 import top.r3944realms.lib39.core.compat.ICompat;
 

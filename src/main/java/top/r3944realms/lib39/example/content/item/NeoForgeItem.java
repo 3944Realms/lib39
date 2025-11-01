@@ -3,7 +3,7 @@ package top.r3944realms.lib39.example.content.item;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -11,19 +11,18 @@ import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import top.r3944realms.lib39.Lib39;
 import top.r3944realms.lib39.example.content.capability.AbstractedTestSyncData;
 import top.r3944realms.lib39.example.content.capability.ExCapabilityHandler;
 import top.r3944realms.lib39.example.content.capability.TestSyncData;
-import top.r3944realms.lib39.util.chat.MessageDisplayClientHelper;
 
+import java.util.List;
 import java.util.Random;
-import java.util.function.Consumer;
 
 /**
  * 用于对准星生物触发 TestSyncData 随机变换的物品
@@ -43,7 +42,9 @@ public class NeoForgeItem extends Item {
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
+    public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
+        ItemStack itemStack = player.getItemInHand(hand);
+
         if (!level.isClientSide()) {
             ServerPlayer serverPlayer = (ServerPlayer) player;
 
@@ -56,10 +57,10 @@ public class NeoForgeItem extends Item {
             }
 
             // 添加冷却时间
-            player.getCooldowns().addCooldown(this.getDefaultInstance(), 20); // 1秒冷却
+            player.getCooldowns().addCooldown(this, 20); // 1秒冷却
         }
 
-        return InteractionResult.SUCCESS_SERVER;
+        return InteractionResultHolder.sidedSuccess(itemStack, level.isClientSide());
     }
 
     /**
@@ -206,8 +207,8 @@ public class NeoForgeItem extends Item {
             }
 
             // 显示数据预览（仅对玩家自己操作时显示）
-            if (entity instanceof Player player) {
-                displayDataPreview(player, testData);
+            if (entity instanceof Player) {
+                displayDataPreview((Player) entity, testData);
             }
 
             return true;
@@ -223,18 +224,16 @@ public class NeoForgeItem extends Item {
      * 显示数据预览给玩家
      */
     private void displayDataPreview(Player player, TestSyncData testData) {
-        if(player instanceof ServerPlayer serverPlayer) {
-            serverPlayer.sendSystemMessage(Component.literal("§6数据预览:"));
-            serverPlayer.sendSystemMessage(Component.literal(
-                    String.format("§7字符串: §f%s", testData.getTestString())
-            ));
-            serverPlayer.sendSystemMessage(Component.literal(
-                    String.format("§7计数器: §f%d", testData.getCounter())
-            ));
-            serverPlayer.sendSystemMessage(Component.literal(
-                    String.format("§7验证状态: %s", testData.validateData() ? "§a通过" : "§c失败")
-            ));
-        }
+        player.sendSystemMessage(Component.literal("§6数据预览:"));
+        player.sendSystemMessage(Component.literal(
+                String.format("§7字符串: §f%s", testData.getTestString())
+        ));
+        player.sendSystemMessage(Component.literal(
+                String.format("§7计数器: §f%d", testData.getCounter())
+        ));
+        player.sendSystemMessage(Component.literal(
+                String.format("§7验证状态: %s", testData.validateData() ? "§a通过" : "§c失败")
+        ));
     }
 
     /**
@@ -250,7 +249,7 @@ public class NeoForgeItem extends Item {
 
     private AbstractedTestSyncData getOrCreateTestSyncData(Entity entity) {
         try {
-            return entity.getCapability(ExCapabilityHandler.TEST_CAP);
+            return entity.getCapability(ExCapabilityHandler.TEST_CAP).resolve().orElseThrow();
         } catch (Exception e) {
             Lib39.LOGGER.error("[NeoForgeItem] 获取 {} 的 TestSyncData 失败: {}",
                     getEntityName((LivingEntity) entity), e.getMessage());
@@ -258,28 +257,28 @@ public class NeoForgeItem extends Item {
         }
     }
 
-    @SuppressWarnings("deprecation")
-    public void appendHoverText(
-            @NotNull ItemStack stack, Item.@NotNull TooltipContext context, @NotNull TooltipDisplay tooltipDisplay, @NotNull Consumer<Component> tooltipAdder, @NotNull TooltipFlag flag
-    ) {
+    @Override
+    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level,
+                                @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
 
-        tooltipAdder.accept(Component.literal("§7右键点击触发§e准星瞄准生物§7的"));
-        tooltipAdder.accept(Component.literal("§7测试数据随机变换"));
-        tooltipAdder.accept(Component.literal("§7§oShift + 右键§7操作§e自身§7数据"));
-        tooltipAdder.accept(Component.literal(""));
-        tooltipAdder.accept(Component.literal("§6冷却时间: §e1秒"));
-        tooltipAdder.accept(Component.literal("§6瞄准距离: §e20格"));
-        tooltipAdder.accept(Component.literal(""));
-        tooltipAdder.accept(Component.literal("§a变换类型:"));
-        tooltipAdder.accept(Component.literal("§7- 完全随机数据"));
-        tooltipAdder.accept(Component.literal("§7- 字符串+计数器"));
-        tooltipAdder.accept(Component.literal("§7- 数值数据"));
-        tooltipAdder.accept(Component.literal("§7- 自定义数据"));
-        tooltipAdder.accept(Component.literal("§7- 重置默认值"));
-        tooltipAdder.accept(Component.literal("§7- 玩家专属数据"));
-        tooltipAdder.accept(Component.literal(""));
-        tooltipAdder.accept(Component.literal("§e自身操作特性:"));
-        tooltipAdder.accept(Component.literal("§7- 显示数据预览"));
-        tooltipAdder.accept(Component.literal("§7- 玩家专属数据变换"));
+        tooltip.add(Component.literal("§7右键点击触发§e准星瞄准生物§7的"));
+        tooltip.add(Component.literal("§7测试数据随机变换"));
+        tooltip.add(Component.literal("§7§oShift + 右键§7操作§e自身§7数据"));
+        tooltip.add(Component.literal(""));
+        tooltip.add(Component.literal("§6冷却时间: §e1秒"));
+        tooltip.add(Component.literal("§6瞄准距离: §e20格"));
+        tooltip.add(Component.literal(""));
+        tooltip.add(Component.literal("§a变换类型:"));
+        tooltip.add(Component.literal("§7- 完全随机数据"));
+        tooltip.add(Component.literal("§7- 字符串+计数器"));
+        tooltip.add(Component.literal("§7- 数值数据"));
+        tooltip.add(Component.literal("§7- 自定义数据"));
+        tooltip.add(Component.literal("§7- 重置默认值"));
+        tooltip.add(Component.literal("§7- 玩家专属数据"));
+        tooltip.add(Component.literal(""));
+        tooltip.add(Component.literal("§e自身操作特性:"));
+        tooltip.add(Component.literal("§7- 显示数据预览"));
+        tooltip.add(Component.literal("§7- 玩家专属数据变换"));
     }
 }

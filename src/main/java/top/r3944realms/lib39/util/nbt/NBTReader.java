@@ -1,4 +1,19 @@
-package top.r3944realms.lib39.util.storage.nbt;
+/*
+ *  Super Lead rope mod
+ *  Copyright (C)  2025  R3944Realms
+ *  This program is free software: you can redistribute it and/or modify
+ *  it under the terms of the GNU General Public License as published by
+ *  the Free Software Foundation, either version 3 of the License, or
+ *  (at your option) any later version.
+ *  This program is distributed in the hope that it will be useful,
+ *  but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *  GNU General Public License for more details.
+ *  You should have received a copy of the GNU General Public License
+ *  along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package top.r3944realms.lib39.util.nbt;
 
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -6,6 +21,7 @@ import net.minecraft.world.phys.Vec3;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -39,8 +55,8 @@ public class NBTReader {
      */
 // 基本读取方法 - 直接赋值给成员变量
     public NBTReader string(String key, Consumer<String> setter) {
-        if (nbt.contains(key) && nbt.getString(key).isPresent()) {
-            setter.accept(nbt.getString(key).get());
+        if (nbt.contains(key)) {
+            setter.accept(nbt.getString(key));
         }
         return this;
     }
@@ -54,7 +70,7 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader string(String key, @NotNull Consumer<String> setter, String defaultValue) {
-        setter.accept(nbt.contains(key) && nbt.getString(key).isPresent() ? nbt.getString(key).get() : defaultValue);
+        setter.accept(nbt.contains(key) ? nbt.getString(key) : defaultValue);
         return this;
     }
 
@@ -66,8 +82,8 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader byteValue(String key, Consumer<Byte> setter) {
-        if (nbt.contains(key) && nbt.getByte(key).isPresent()) {
-            setter.accept(nbt.getByte(key).get());
+        if (nbt.contains(key)) {
+            setter.accept(nbt.getByte(key));
         }
         return this;
     }
@@ -81,7 +97,7 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader byteValue(String key, @NotNull Consumer<Byte> setter, byte defaultValue) {
-        setter.accept(nbt.contains(key) ? nbt.getByteOr(key, defaultValue) : defaultValue);
+        setter.accept(nbt.contains(key) ? nbt.getByte(key) : defaultValue);
         return this;
     }
 
@@ -93,8 +109,8 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader shortValue(String key, Consumer<Short> setter) {
-        if (nbt.contains(key) && nbt.getShort(key).isPresent()) {
-            setter.accept(nbt.getShort(key).get());
+        if (nbt.contains(key)) {
+            setter.accept(nbt.getShort(key));
         }
         return this;
     }
@@ -108,7 +124,7 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader shortValue(String key, @NotNull Consumer<Short> setter, short defaultValue) {
-        setter.accept(nbt.contains(key) ? nbt.getShortOr(key, defaultValue) : defaultValue);
+        setter.accept(nbt.contains(key) ? nbt.getShort(key) : defaultValue);
         return this;
     }
 
@@ -120,8 +136,8 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader intValue(String key, Consumer<Integer> setter) {
-        if (nbt.contains(key) && nbt.getInt(key).isPresent()) {
-            setter.accept(nbt.getInt(key).get());
+        if (nbt.contains(key)) {
+            setter.accept(nbt.getInt(key));
         }
         return this;
     }
@@ -135,7 +151,7 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader intValue(String key, @NotNull Consumer<Integer> setter, int defaultValue) {
-        setter.accept(nbt.contains(key) ? nbt.getIntOr(key, defaultValue) : defaultValue);
+        setter.accept(nbt.contains(key) ? nbt.getInt(key) : defaultValue);
         return this;
     }
 
@@ -147,8 +163,8 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader longValue(String key, Consumer<Long> setter) {
-        if (nbt.contains(key) && nbt.getLong(key).isPresent()) {
-            setter.accept(nbt.getLong(key).get());
+        if (nbt.contains(key)) {
+            setter.accept(nbt.getLong(key));
         }
         return this;
     }
@@ -162,7 +178,7 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader longValue(String key, @NotNull Consumer<Long> setter, long defaultValue) {
-        setter.accept(nbt.contains(key) ? nbt.getLongOr(key, defaultValue) : defaultValue);
+        setter.accept(nbt.contains(key) ? nbt.getLong(key) : defaultValue);
         return this;
     }
 
@@ -174,8 +190,8 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader floatValue(String key, Consumer<Float> setter) {
-        if (nbt.contains(key) && nbt.getFloat(key).isPresent()) {
-            setter.accept(nbt.getFloat(key).get());
+        if (nbt.contains(key)) {
+            setter.accept(nbt.getFloat(key));
         }
         return this;
     }
@@ -189,9 +205,10 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader floatValue(String key, @NotNull Consumer<Float> setter, float defaultValue) {
-        setter.accept(nbt.contains(key) ? nbt.getFloatOr(key, defaultValue) : defaultValue);
+        setter.accept(nbt.contains(key) ? nbt.getFloat(key) : defaultValue);
         return this;
     }
+
     /**
      * Double value nbt reader.
      *
@@ -200,8 +217,8 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader doubleValue(String key, Consumer<Double> setter) {
-        if (nbt.contains(key) && nbt.getDouble(key).isPresent()) {
-            setter.accept(nbt.getDouble(key).get());
+        if (nbt.contains(key)) {
+            setter.accept(nbt.getDouble(key));
         }
         return this;
     }
@@ -215,7 +232,7 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader doubleValue(String key, @NotNull Consumer<Double> setter, double defaultValue) {
-        setter.accept(nbt.contains(key) ? nbt.getDoubleOr(key, defaultValue) : defaultValue);
+        setter.accept(nbt.contains(key) ? nbt.getDouble(key) : defaultValue);
         return this;
     }
 
@@ -227,8 +244,8 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader booleanValue(String key, Consumer<Boolean> setter) {
-        if (nbt.contains(key) && nbt.getBoolean(key).isPresent()) {
-            setter.accept(nbt.getBoolean(key).get());
+        if (nbt.contains(key)) {
+            setter.accept(nbt.getBoolean(key));
         }
         return this;
     }
@@ -242,7 +259,7 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader booleanValue(String key, @NotNull Consumer<Boolean> setter, boolean defaultValue) {
-        setter.accept(nbt.contains(key) ? nbt.getBooleanOr(key, defaultValue) : defaultValue);
+        setter.accept(nbt.contains(key) ? nbt.getBoolean(key) : defaultValue);
         return this;
     }
 
@@ -253,23 +270,11 @@ public class NBTReader {
      * @param setter the setter
      * @return the nbt reader
      */
+// 数组类型
     public NBTReader byteArray(String key, Consumer<byte[]> setter) {
-        if (nbt.contains(key) && nbt.getByteArray(key).isPresent()) {
-            setter.accept(nbt.getByteArray(key).get());
+        if (nbt.contains(key)) {
+            setter.accept(nbt.getByteArray(key));
         }
-        return this;
-    }
-
-    /**
-     * Byte array nbt reader.
-     *
-     * @param key          the key
-     * @param setter       the setter
-     * @param defaultValue the default value
-     * @return the nbt reader
-     */
-    public NBTReader byteArray(String key, @NotNull Consumer<byte[]> setter, byte[] defaultValue) {
-        setter.accept(nbt.contains(key) ? nbt.getByteArray(key).orElse(defaultValue) : defaultValue);
         return this;
     }
 
@@ -281,22 +286,9 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader intArray(String key, Consumer<int[]> setter) {
-        if (nbt.contains(key) && nbt.getIntArray(key).isPresent()) {
-            setter.accept(nbt.getIntArray(key).get());
+        if (nbt.contains(key)) {
+            setter.accept(nbt.getIntArray(key));
         }
-        return this;
-    }
-
-    /**
-     * Int array nbt reader.
-     *
-     * @param key          the key
-     * @param setter       the setter
-     * @param defaultValue the default value
-     * @return the nbt reader
-     */
-    public NBTReader intArray(String key, @NotNull Consumer<int[]> setter, int[] defaultValue) {
-        setter.accept(nbt.contains(key) ? nbt.getIntArray(key).orElse(defaultValue) : defaultValue);
         return this;
     }
 
@@ -308,22 +300,37 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader longArray(String key, Consumer<long[]> setter) {
-        if (nbt.contains(key) && nbt.getLongArray(key).isPresent()) {
-            setter.accept(nbt.getLongArray(key).get());
+        if (nbt.contains(key)) {
+            setter.accept(nbt.getLongArray(key));
         }
         return this;
     }
 
     /**
-     * Long array nbt reader.
+     * Uuid nbt reader.
+     *
+     * @param key    the key
+     * @param setter the setter
+     * @return the nbt reader
+     */
+// UUID
+    public NBTReader uuid(String key, Consumer<UUID> setter) {
+        if (nbt.hasUUID(key)) {
+            setter.accept(nbt.getUUID(key));
+        }
+        return this;
+    }
+
+    /**
+     * Uuid nbt reader.
      *
      * @param key          the key
      * @param setter       the setter
      * @param defaultValue the default value
      * @return the nbt reader
      */
-    public NBTReader longArray(String key, @NotNull Consumer<long[]> setter, long[] defaultValue) {
-        setter.accept(nbt.contains(key) ? nbt.getLongArray(key).orElse(defaultValue) : defaultValue);
+    public NBTReader uuid(String key, @NotNull Consumer<UUID> setter, UUID defaultValue) {
+        setter.accept(nbt.hasUUID(key) ? nbt.getUUID(key) : defaultValue);
         return this;
     }
 
@@ -334,10 +341,10 @@ public class NBTReader {
      * @param setter the setter
      * @return the nbt reader
      */
-    @SuppressWarnings("UnusedReturnValue")
+// CompoundTag
     public NBTReader compound(String key, Consumer<CompoundTag> setter) {
-        if (nbt.contains(key) && nbt.getCompound(key).isPresent()) {
-            setter.accept(nbt.getCompound(key).get());
+        if (nbt.contains(key)) {
+            setter.accept(nbt.getCompound(key));
         }
         return this;
     }
@@ -351,7 +358,7 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader compound(String key, @NotNull Consumer<CompoundTag> setter, CompoundTag defaultValue) {
-        setter.accept(nbt.contains(key) ? nbt.getCompound(key).orElse(defaultValue) : defaultValue);
+        setter.accept(nbt.contains(key) ? nbt.getCompound(key) : defaultValue);
         return this;
     }
 
@@ -359,33 +366,14 @@ public class NBTReader {
      * List nbt reader.
      *
      * @param key    the key
+     * @param type   the type
      * @param setter the setter
      * @return the nbt reader
      */
-    public NBTReader list(String key, Consumer<ListTag> setter) {
-        if (nbt.contains(key) && nbt.getList(key).isPresent()) {
-            ListTag list = nbt.getList(key).get();
-            if (!list.isEmpty()) {
-                setter.accept(list);
-            }
-        }
-        return this;
-    }
-
-    /**
-     * List nbt reader.
-     *
-     * @param key          the key
-     * @param setter       the setter
-     * @param defaultValue the default value
-     * @return the nbt reader
-     */
-    public NBTReader list(String key, @NotNull Consumer<ListTag> setter, ListTag defaultValue) {
+// ListTag
+    public NBTReader list(String key, int type, Consumer<ListTag> setter) {
         if (nbt.contains(key)) {
-            ListTag list = nbt.getListOrEmpty(key);
-            setter.accept(list.isEmpty() ? defaultValue : list);
-        } else {
-            setter.accept(defaultValue);
+            setter.accept(nbt.getList(key, type));
         }
         return this;
     }
@@ -397,14 +385,15 @@ public class NBTReader {
      * @param setter the setter
      * @return the nbt reader
      */
+// Vec3支持
     public NBTReader vec3(String key, Consumer<Vec3> setter) {
-        if (nbt.contains(key) && nbt.getCompound(key).isPresent()) {
-            CompoundTag vecTag = nbt.getCompound(key).get();
+        if (nbt.contains(key)) {
+            CompoundTag vecTag = nbt.getCompound(key);
             if (vecTag.contains("X") && vecTag.contains("Y") && vecTag.contains("Z")) {
                 setter.accept(new Vec3(
-                        vecTag.getDouble("X").orElse(0.0),
-                        vecTag.getDouble("Y").orElse(0.0),
-                        vecTag.getDouble("Z").orElse(0.0)
+                        vecTag.getDouble("X"),
+                        vecTag.getDouble("Y"),
+                        vecTag.getDouble("Z")
                 ));
             }
         }
@@ -420,13 +409,13 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader vec3(String key, Consumer<Vec3> setter, Vec3 defaultValue) {
-        if (nbt.contains(key) && nbt.getCompound(key).isPresent()) {
-            CompoundTag vecTag = nbt.getCompound(key).get();
+        if (nbt.contains(key)) {
+            CompoundTag vecTag = nbt.getCompound(key);
             if (vecTag.contains("X") && vecTag.contains("Y") && vecTag.contains("Z")) {
                 setter.accept(new Vec3(
-                        vecTag.getDouble("X").orElse(0.0),
-                        vecTag.getDouble("Y").orElse(0.0),
-                        vecTag.getDouble("Z").orElse(0.0)
+                        vecTag.getDouble("X"),
+                        vecTag.getDouble("Y"),
+                        vecTag.getDouble("Z")
                 ));
                 return this;
             }
@@ -444,13 +433,14 @@ public class NBTReader {
      * @param setter    the setter
      * @return the nbt reader
      */
+// 枚举支持
     public <T extends Enum<T>> NBTReader enumValue(String key, Class<T> enumClass, Consumer<T> setter) {
-        if (nbt.contains(key) && nbt.getString(key).isPresent()) {
-            String value = nbt.getString(key).get();
+        if (nbt.contains(key)) {
+            String value = nbt.getString(key);
             try {
                 setter.accept(Enum.valueOf(enumClass, value.toUpperCase()));
             } catch (IllegalArgumentException ignored) {
-
+                // 保持setter的当前值
             }
         }
         return this;
@@ -467,8 +457,8 @@ public class NBTReader {
      * @return the nbt reader
      */
     public <T extends Enum<T>> NBTReader enumValue(String key, Class<T> enumClass, Consumer<T> setter, T defaultValue) {
-        if (nbt.contains(key) && nbt.getString(key).isPresent()) {
-            String value = nbt.getString(key).get();
+        if (nbt.contains(key)) {
+            String value = nbt.getString(key);
             try {
                 setter.accept(Enum.valueOf(enumClass, value.toUpperCase()));
                 return this;
@@ -486,9 +476,10 @@ public class NBTReader {
      * @param consumer the consumer
      * @return the nbt reader
      */
+// 嵌套读取支持
     public NBTReader nested(String key, Consumer<NBTReader> consumer) {
-        if (nbt.contains(key) && nbt.getCompound(key).isPresent()) {
-            consumer.accept(new NBTReader(nbt.getCompound(key).get()));
+        if (nbt.contains(key)) {
+            consumer.accept(new NBTReader(nbt.getCompound(key)));
         }
         return this;
     }
@@ -502,8 +493,8 @@ public class NBTReader {
      * @return the nbt reader
      */
     public NBTReader nested(String key, Consumer<NBTReader> consumer, Runnable orElse) {
-        if (nbt.contains(key) && nbt.getCompound(key).isPresent()) {
-            consumer.accept(new NBTReader(nbt.getCompound(key).get()));
+        if (nbt.contains(key)) {
+            consumer.accept(new NBTReader(nbt.getCompound(key)));
         } else {
             orElse.run();
         }
@@ -517,6 +508,7 @@ public class NBTReader {
      * @param action the action
      * @return the nbt reader
      */
+// 条件读取
     public NBTReader ifPresent(String key, Runnable action) {
         if (nbt.contains(key)) {
             action.run();
@@ -543,6 +535,7 @@ public class NBTReader {
      *
      * @return the raw
      */
+// 获取原始NBT
     @NotNull
     public CompoundTag getRaw() {
         return nbt;
@@ -554,13 +547,14 @@ public class NBTReader {
      * @param nbt the nbt
      * @return the vec 3
      */
+// 便捷的静态方法（保持原有功能）
     @NotNull
     public static Vec3 readVec3(@NotNull CompoundTag nbt) {
         if (nbt.contains("X") && nbt.contains("Y") && nbt.contains("Z")) {
             return new Vec3(
-                    nbt.getDouble("X").orElse(0.0),
-                    nbt.getDouble("Y").orElse(0.0),
-                    nbt.getDouble("Z").orElse(0.0)
+                    nbt.getDouble("X"),
+                    nbt.getDouble("Y"),
+                    nbt.getDouble("Z")
             );
         } else {
             throw new IllegalArgumentException("NBT is missing X, Y, or Z value for Vec3");
@@ -577,9 +571,9 @@ public class NBTReader {
     public static Vec3 readVec3Safe(@NotNull CompoundTag nbt) {
         if (nbt.contains("X") && nbt.contains("Y") && nbt.contains("Z")) {
             return new Vec3(
-                    nbt.getDouble("X").orElse(0.0),
-                    nbt.getDouble("Y").orElse(0.0),
-                    nbt.getDouble("Z").orElse(0.0)
+                    nbt.getDouble("X"),
+                    nbt.getDouble("Y"),
+                    nbt.getDouble("Z")
             );
         }
         return null;

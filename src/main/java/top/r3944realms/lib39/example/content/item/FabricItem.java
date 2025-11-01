@@ -1,10 +1,9 @@
 package top.r3944realms.lib39.example.content.item;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResult;
+import net.minecraft.world.InteractionResultHolder;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.player.Player;
@@ -12,22 +11,20 @@ import net.minecraft.world.entity.projectile.ProjectileUtil;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import net.minecraft.world.item.component.TooltipDisplay;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.EntityHitResult;
 import net.minecraft.world.phys.Vec3;
-import net.neoforged.neoforge.client.network.ClientPacketDistributor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import top.r3944realms.lib39.Lib39;
 import top.r3944realms.lib39.example.content.capability.AbstractedTestSyncData;
 import top.r3944realms.lib39.example.content.capability.ExCapabilityHandler;
 import top.r3944realms.lib39.example.content.capability.TestSyncData;
-import top.r3944realms.lib39.example.core.network.ClientDataPayload;
-import top.r3944realms.lib39.util.chat.MessageDisplayClientHelper;
+import top.r3944realms.lib39.example.core.network.ClientDataPacket;
+import top.r3944realms.lib39.example.core.network.ExNetworkHandler;
 
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
-import java.util.function.Consumer;
 
 /**
  * 用于执行数据查询并检查同步状态的物品
@@ -46,7 +43,8 @@ public class FabricItem extends Item {
     }
 
     @Override
-    public @NotNull InteractionResult use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
+    public @NotNull InteractionResultHolder<ItemStack> use(@NotNull Level level, @NotNull Player player, @NotNull InteractionHand hand) {
+        ItemStack itemStack = player.getItemInHand(hand);
 
         if (level.isClientSide()) {
             // 客户端逻辑
@@ -63,17 +61,17 @@ public class FabricItem extends Item {
 
             if (player.isShiftKeyDown()) {
                 // 服务器端已经通过数据包处理双端检查，这里只发送开始消息
-                ((ServerPlayer) player).sendSystemMessage(Component.literal("§b开始双端同步检查，请等待客户端数据..."));
+                player.sendSystemMessage(Component.literal("§b开始双端同步检查，请等待客户端数据..."));
             } else {
                 // 服务器单端查询
                 handleServerSingleEndQuery(serverPlayer);
             }
 
             // 添加冷却时间
-            player.getCooldowns().addCooldown(this.getDefaultInstance(), 20); // 1秒冷却
+            player.getCooldowns().addCooldown(this, 20); // 1秒冷却
         }
 
-        return InteractionResult.SUCCESS;
+        return InteractionResultHolder.sidedSuccess(itemStack, level.isClientSide());
     }
 
     /**
@@ -91,15 +89,15 @@ public class FabricItem extends Item {
                 sendClientDataToServer(clientData, livingTarget.getId());
 
                 // 客户端提示
-                Minecraft.getInstance().getChatListener().handleSystemMessage(Component.literal("§b已发送客户端数据到服务器，等待对比结果..."), false);
+                player.sendSystemMessage(Component.literal("§b已发送客户端数据到服务器，等待对比结果..."));
             } else {
-                Minecraft.getInstance().getChatListener().handleSystemMessage(Component.literal("§c无法获取客户端本地数据"), false);
+                player.sendSystemMessage(Component.literal("§c无法获取客户端本地数据"));
             }
         } else {
            if (targetEntity == null && player.isShiftKeyDown()) {
                handlePlayerSelfData(player);
            } else {
-               Minecraft.getInstance().getChatListener().handleSystemMessage(Component.literal("§c请对准一个生物进行同步检查！"), false);
+               player.sendSystemMessage(Component.literal("§c请对准一个生物进行同步检查！"));
            }
         }
     }
@@ -116,9 +114,9 @@ public class FabricItem extends Item {
             sendClientDataToServer(clientData, player.getId());
 
             // 客户端提示
-            Minecraft.getInstance().getChatListener().handleSystemMessage(Component.literal("§b已发送玩家自身客户端数据到服务器，等待对比结果..."), false);
+            player.sendSystemMessage(Component.literal("§b已发送玩家自身客户端数据到服务器，等待对比结果..."));
         } else {
-            Minecraft.getInstance().getChatListener().handleSystemMessage(Component.literal("§c无法获取玩家自身客户端数据"), false);
+            player.sendSystemMessage(Component.literal("§c无法获取玩家自身客户端数据"));
         }
     }
     /**
@@ -131,12 +129,12 @@ public class FabricItem extends Item {
             TestSyncData clientData = getLocalClientData(livingTarget);
 
             if (clientData != null) {
-                displayClientSideResults(livingTarget, clientData);
+                displayClientSideResults(player, livingTarget, clientData);
             } else {
-                Minecraft.getInstance().getChatListener().handleSystemMessage(Component.literal("§c无法查询客户端本地数据"), false);
+                player.sendSystemMessage(Component.literal("§c无法查询客户端本地数据"));
             }
         } else {
-            Minecraft.getInstance().getChatListener().handleSystemMessage(Component.literal("§c请对准一个生物使用！"), false);
+            player.sendSystemMessage(Component.literal("§c请对准一个生物使用！"));
         }
     }
 
@@ -163,7 +161,7 @@ public class FabricItem extends Item {
      */
     private TestSyncData getLocalClientData(LivingEntity target) {
         try {
-            AbstractedTestSyncData abstractData = target.getCapability(ExCapabilityHandler.TEST_CAP);
+            AbstractedTestSyncData abstractData = target.getCapability(ExCapabilityHandler.TEST_CAP).resolve().orElse(null);
             if (abstractData instanceof TestSyncData) {
                 return (TestSyncData) abstractData;
             }
@@ -178,7 +176,7 @@ public class FabricItem extends Item {
      */
     private void sendClientDataToServer(TestSyncData clientData, int targetEntityId) {
         // 使用网络系统发送数据包
-        ClientPacketDistributor.sendToServer(new ClientDataPayload(clientData, targetEntityId));
+        ExNetworkHandler.INSTANCE.sendToServer(new ClientDataPacket(clientData, targetEntityId));
     }
 
     /**
@@ -211,7 +209,7 @@ public class FabricItem extends Item {
      */
     private static @Nullable TestSyncData getServerSideData(LivingEntity target) {
         try {
-            AbstractedTestSyncData abstractData = target.getCapability(ExCapabilityHandler.TEST_CAP);
+            AbstractedTestSyncData abstractData = target.getCapability(ExCapabilityHandler.TEST_CAP).resolve().orElse(null);
             if (abstractData instanceof TestSyncData) {
                 return (TestSyncData) abstractData;
             }
@@ -231,7 +229,9 @@ public class FabricItem extends Item {
                 Thread.sleep(3000);
 
                 // 在服务器线程中执行结果处理
-                player.server.execute(() -> displayServerSingleEndResults(player, target));
+                player.server.execute(() -> {
+                    displayServerSingleEndResults(player, target);
+                });
 
             } catch (InterruptedException e) {
                 Thread.currentThread().interrupt();
@@ -268,23 +268,24 @@ public class FabricItem extends Item {
     /**
      * 显示客户端查询结果
      */
-    private void displayClientSideResults(LivingEntity target, TestSyncData clientData) {
-        MessageDisplayClientHelper.sendSystemMessage(Component.literal("§6=== 客户端数据查询结果 ==="));
-        MessageDisplayClientHelper.sendSystemMessage(Component.literal("§7目标生物: §e" + target.getName().getString()));
-        MessageDisplayClientHelper.sendSystemMessage(Component.literal("§7数据来源: §9客户端本地"));
-        MessageDisplayClientHelper.sendSystemMessage(Component.literal(""));
+    private void displayClientSideResults(Player player, LivingEntity target, TestSyncData clientData) {
+        player.sendSystemMessage(Component.literal("§6=== 客户端数据查询结果 ==="));
+        player.sendSystemMessage(Component.literal("§7目标生物: §e" + target.getName().getString()));
+        player.sendSystemMessage(Component.literal("§7数据来源: §9客户端本地"));
+        player.sendSystemMessage(Component.literal(""));
 
-        MessageDisplayClientHelper.sendSystemMessage(Component.literal("§a基础数据:"));
-        MessageDisplayClientHelper.sendSystemMessage(Component.literal("§7字符串: §f" + clientData.getTestString()));
-        MessageDisplayClientHelper.sendSystemMessage(Component.literal("§7整数值: §f" + clientData.getTestInt()));
-        MessageDisplayClientHelper.sendSystemMessage(Component.literal("§7布尔值: §f" + clientData.isTestBoolean()));
-        MessageDisplayClientHelper.sendSystemMessage(Component.literal("§7双精度值: §f" + String.format("%.2f", clientData.getTestDouble())));
-        MessageDisplayClientHelper.sendSystemMessage(Component.literal("§7计数器: §f" + clientData.getCounter()));
+        player.sendSystemMessage(Component.literal("§a基础数据:"));
+        player.sendSystemMessage(Component.literal("§7字符串: §f" + clientData.getTestString()));
+        player.sendSystemMessage(Component.literal("§7整数值: §f" + clientData.getTestInt()));
+        player.sendSystemMessage(Component.literal("§7布尔值: §f" + clientData.isTestBoolean()));
+        player.sendSystemMessage(Component.literal("§7双精度值: §f" + String.format("%.2f", clientData.getTestDouble())));
+        player.sendSystemMessage(Component.literal("§7计数器: §f" + clientData.getCounter()));
 
         // 显示客户端特定信息
-        MessageDisplayClientHelper.sendSystemMessage(Component.literal(""));
-        MessageDisplayClientHelper.sendSystemMessage(Component.literal("§e客户端状态:"));
-        MessageDisplayClientHelper.sendSystemMessage(Component.literal("§7数据验证: " + (clientData.validateData() ? "§a通过" : "§c失败")));
+        player.sendSystemMessage(Component.literal(""));
+        player.sendSystemMessage(Component.literal("§e客户端状态:"));
+        player.sendSystemMessage(Component.literal("§7数据验证: " + (clientData.validateData() ? "§a通过" : "§c失败")));
+        player.sendSystemMessage(Component.literal("§7同步状态: " + (clientData.isDirty() ? "§6待同步" : "§a已同步")));
     }
 
     /**
@@ -341,6 +342,9 @@ public class FabricItem extends Item {
         player.sendSystemMessage(Component.literal(
                 String.format("§7数据验证: %s", isValid ? "§a通过" : "§c失败")
         ));
+        player.sendSystemMessage(Component.literal(
+                String.format("§7数据状态: %s", testData.isDirty() ? "§6未同步" : "§a已同步")
+        ));
     }
 
     /**
@@ -356,7 +360,7 @@ public class FabricItem extends Item {
         // 显示双端数据来源
         player.sendSystemMessage(Component.literal("§a数据来源:"));
         player.sendSystemMessage(Component.literal("§7- §c服务器端§7: 实体ID " + serverData.entityId()));
-        player.sendSystemMessage(Component.literal("§7- §9客户端§7: 实体ID " + serverData.entityId()));
+        player.sendSystemMessage(Component.literal("§7- §9客户端§7: 实体ID " + clientData.entityId()));
         player.sendSystemMessage(Component.literal(""));
 
         // 比较各个字段
@@ -406,6 +410,12 @@ public class FabricItem extends Item {
         // 显示数据状态差异
         player.sendSystemMessage(Component.literal(""));
         player.sendSystemMessage(Component.literal("§a数据状态差异:"));
+        player.sendSystemMessage(Component.literal(
+                String.format("§7服务器脏数据状态: %s", serverData.isDirty() ? "§6脏" : "§a干净")
+        ));
+        player.sendSystemMessage(Component.literal(
+                String.format("§7客户端脏数据状态: %s", clientData.isDirty() ? "§6脏" : "§a干净")
+        ));
         player.sendSystemMessage(Component.literal(
                 String.format("§7服务器验证状态: %s", serverData.validateData() ? "§a通过" : "§c失败")
         ));
@@ -542,37 +552,38 @@ public class FabricItem extends Item {
      */
     private AbstractedTestSyncData getTestSyncData(Entity entity) {
         try {
-            return entity.getCapability(ExCapabilityHandler.TEST_CAP);
+            return entity.getCapability(ExCapabilityHandler.TEST_CAP).resolve().orElse(null);
         } catch (Exception e) {
             Lib39.LOGGER.debug("[FabricItem] 获取生物 {} 的 TestSyncData 失败: {}",
                     entity.getName().getString(), e.getMessage());
             return null;
         }
     }
-    @SuppressWarnings("deprecation")
-    public void appendHoverText(
-            @NotNull ItemStack stack, Item.@NotNull TooltipContext context, @NotNull TooltipDisplay tooltipDisplay, @NotNull Consumer<Component> tooltipAdder, @NotNull TooltipFlag flag
-    ) {
-        tooltipAdder.accept(Component.literal("§7右键点击在 3 秒后执行"));
-        tooltipAdder.accept(Component.literal("§7§e准星瞄准生物§7的数据查询"));
-        tooltipAdder.accept(Component.literal("§7§oShift + 右键§7进行§e客户端-服务器双端同步检查§7"));
-        tooltipAdder.accept(Component.literal(""));
-        tooltipAdder.accept(Component.literal("§6查询延迟: §e3秒"));
-        tooltipAdder.accept(Component.literal("§6瞄准距离: §e20格"));
-        tooltipAdder.accept(Component.literal("§6冷却时间: §e1秒"));
-        tooltipAdder.accept(Component.literal(""));
-        tooltipAdder.accept(Component.literal("§a单端查询内容:"));
-        tooltipAdder.accept(Component.literal("§7- 基础数据字段"));
-        tooltipAdder.accept(Component.literal("§7- 自定义数据结构"));
-        tooltipAdder.accept(Component.literal("§7- 数据验证状态"));
-        tooltipAdder.accept(Component.literal("§7- 同步状态信息"));
-        tooltipAdder.accept(Component.literal(""));
-        tooltipAdder.accept(Component.literal("§e双端同步检查:"));
-        tooltipAdder.accept(Component.literal("§7- 客户端和服务器同时查询"));
-        tooltipAdder.accept(Component.literal("§7- 字段级同步状态对比"));
-        tooltipAdder.accept(Component.literal("§7- 总体同步率计算"));
-        tooltipAdder.accept(Component.literal("§7- 双端数据状态差异"));
-        tooltipAdder.accept(Component.literal("§7- 同步建议"));
-    }
 
+    @Override
+    public void appendHoverText(@NotNull ItemStack stack, @Nullable Level level,
+                                @NotNull List<Component> tooltip, @NotNull TooltipFlag flag) {
+        super.appendHoverText(stack, level, tooltip, flag);
+
+        tooltip.add(Component.literal("§7右键点击在 3 秒后执行"));
+        tooltip.add(Component.literal("§7§e准星瞄准生物§7的数据查询"));
+        tooltip.add(Component.literal("§7§oShift + 右键§7进行§e客户端-服务器双端同步检查§7"));
+        tooltip.add(Component.literal(""));
+        tooltip.add(Component.literal("§6查询延迟: §e3秒"));
+        tooltip.add(Component.literal("§6瞄准距离: §e20格"));
+        tooltip.add(Component.literal("§6冷却时间: §e1秒"));
+        tooltip.add(Component.literal(""));
+        tooltip.add(Component.literal("§a单端查询内容:"));
+        tooltip.add(Component.literal("§7- 基础数据字段"));
+        tooltip.add(Component.literal("§7- 自定义数据结构"));
+        tooltip.add(Component.literal("§7- 数据验证状态"));
+        tooltip.add(Component.literal("§7- 同步状态信息"));
+        tooltip.add(Component.literal(""));
+        tooltip.add(Component.literal("§e双端同步检查:"));
+        tooltip.add(Component.literal("§7- 客户端和服务器同时查询"));
+        tooltip.add(Component.literal("§7- 字段级同步状态对比"));
+        tooltip.add(Component.literal("§7- 总体同步率计算"));
+        tooltip.add(Component.literal("§7- 双端数据状态差异"));
+        tooltip.add(Component.literal("§7- 同步建议"));
+    }
 }

@@ -75,7 +75,7 @@ public class RidingApplier {
                 if (RidingValidator.wouldCreateCycle(entity, vehicle)) {
                     throw new RidingCycleException(entityId, vehicleId);
                 }
-                boolean success = entity.startRiding(vehicle, true, true);
+                boolean success = entity.startRiding(vehicle, true);
                 if (!success) {
                     Lib39.LOGGER.error("Failed to mount entity {} to vehicle {}", entityId, vehicleId);
                 }

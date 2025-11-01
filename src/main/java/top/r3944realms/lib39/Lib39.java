@@ -1,12 +1,11 @@
 package top.r3944realms.lib39;
 
-
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModList;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.fml.loading.FMLEnvironment;
+import net.minecraftforge.fml.ModList;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.loading.FMLEnvironment;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import top.r3944realms.lib39.core.network.NetworkHandler;
 import top.r3944realms.lib39.example.Lib39Example;
 
 /**
@@ -26,18 +25,19 @@ public class Lib39 {
     /**
      * Instantiates a new Lib 39.
      */
-    public Lib39(IEventBus event) {
-        initialize(event);
+    public Lib39() {
+        initialize();
     }
 
     /**
      * Initialize.
      */
-    public static void initialize(IEventBus event) {
+    public static void initialize() {
         LOGGER.info("[Lib39] Initializing Lib39");
+        NetworkHandler.register();
         if (shouldRegisterExamples()) {
             LOGGER.info("[Lib39] Registering Examples");
-            registerExamples(event);
+            registerExamples();
         }
         LOGGER.info("[Lib39] Initialized Lib39");
 
@@ -66,17 +66,17 @@ public class Lib39 {
      * @return the boolean
      */
     static boolean shouldRegisterExamples() {
-        return !FMLEnvironment.isProduction();
+        return !FMLEnvironment.production;
     }
 
     /**
      * Register examples.
      */
-    static void registerExamples(IEventBus event) {
+    static void registerExamples() {
         LOGGER.info("[Lib39] Starting example demonstrations");
         try {
             // 创建示例实例并演示功能
-            Lib39Example example = new Lib39Example(event);
+            Lib39Example example = new Lib39Example();
             example.demonstrateFeature();
 
             LOGGER.info("[Lib39] Example demonstrations completed successfully");

@@ -1,4 +1,4 @@
-package top.r3944realms.lib39.util.storage.nbt;
+package top.r3944realms.lib39.util.nbt;
 
 import net.minecraft.nbt.*;
 import net.minecraft.world.phys.Vec3;
@@ -6,6 +6,7 @@ import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.UUID;
 import java.util.function.Consumer;
 
 /**
@@ -389,6 +390,38 @@ public class NBTWriter {
     public NBTWriter longArray(String key, long[] value) {
         if (value != null) {
             root.putLongArray(key, value);
+        }
+        return this;
+    }
+
+    /**
+     * Uuid nbt writer.
+     *
+     * @param key   the key
+     * @param value the value
+     * @return the nbt writer
+     */
+// UUID支持
+    public NBTWriter uuid(String key, UUID value) {
+        if (value != null) {
+            root.putUUID(key, value);
+        }
+        return this;
+    }
+
+    /**
+     * Uuid nbt writer.
+     *
+     * @param key          the key
+     * @param value        the value
+     * @param defaultValue the default value
+     * @return the nbt writer
+     */
+    public NBTWriter uuid(String key, UUID value, UUID defaultValue) {
+        if (value != null) {
+            root.putUUID(key, value);
+        } else if (defaultValue != null) {
+            root.putUUID(key, defaultValue);
         }
         return this;
     }
@@ -1028,7 +1061,7 @@ public class NBTWriter {
      * @return the all keys
      */
     public java.util.Set<String> getAllKeys() {
-        return root.tags.keySet();
+        return root.getAllKeys();
     }
 
     /**

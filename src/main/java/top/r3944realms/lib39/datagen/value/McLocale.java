@@ -21,7 +21,7 @@ public enum McLocale implements ILocaleEntry {
     /**
      * The Lzh.
      */
-    LZH("lzh", Locale.of("lzh", "ZH")),
+    LZH("lzh", new Locale("lzh", "ZH")),
     /**
      * Ja jp mc locale.
      */
@@ -33,7 +33,7 @@ public enum McLocale implements ILocaleEntry {
     /**
      * The Ru ru.
      */
-    RU_RU("ru_ru", Locale.of("ru", "RU")),
+    RU_RU("ru_ru", new Locale("ru", "RU")),
     /**
      * Fr fr mc locale.
      */
@@ -45,7 +45,7 @@ public enum McLocale implements ILocaleEntry {
     /**
      * The Es es.
      */
-    ES_ES("es_es", Locale.of("es", "ES"));
+    ES_ES("es_es", new Locale("es", "ES"));
 
     private final String mcCode;
     private final Locale javaLocale;
